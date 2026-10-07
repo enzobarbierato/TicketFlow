@@ -2,16 +2,17 @@
   "name": "ticketflow",
   "version": "1.0.0",
   "description": "O TicketFlow é um sistema web de gerenciamento de chamados que permite abrir, acompanhar e organizar solicitações de suporte. O projeto utiliza Node.js, Express, PostgreSQL, HTML, CSS e JavaScript, com foco em usabilidade, organização e boas práticas de desenvolvimento.",
-  "main": "index.js",
+  "main": "src/server.js",
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "start": "node src/server.js",
+    "dev": "node --watch src/server.js"
   },
   "repository": {
     "type": "git",
     "url": "git+https://github.com/enzobarbierato/TicketFlow.git"
   },
   "keywords": [],
-  "author": "",
+  "author": "Enzo Barbierato",
   "license": "ISC",
   "bugs": {
     "url": "https://github.com/enzobarbierato/TicketFlow/issues"
