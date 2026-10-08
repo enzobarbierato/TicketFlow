@@ -1,0 +1,48 @@
+const pool = require("../database/connection");
+
+async function createTicket({
+  title,
+  description,
+  category,
+  priority,
+  created_by,
+}) {
+  const query = `
+    INSERT INTO tickets (
+      title,
+      description,
+      category,
+      priority,
+      created_by
+    )
+    VALUES ($1, $2, $3, $4, $5)
+    RETURNING
+      id,
+      title,
+      description,
+      category,
+      priority,
+      status,
+      created_by,
+      assigned_to,
+      created_on,
+      updated_on,
+      closed_on;
+  `;
+
+  const values = [
+    title,
+    description,
+    category,
+    priority || "medium",
+    created_by,
+  ];
+
+  const result = await pool.query(query, values);
+
+  return result.rows[0];
+}
+
+module.exports = {
+  createTicket,
+};
