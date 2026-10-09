@@ -11,19 +11,26 @@ CREATE TABLE IF NOT EXISTS users (
     created_by BIGINT,
     role VARCHAR(20) NOT NULL DEFAULT 'user',
 
-CONSTRAINT chk_users_role
-    CHECK (role IN ('user', 'support', 'manager')),
+    CONSTRAINT chk_users_role
+        CHECK (role IN ('user', 'support', 'manager')),
 
-CONSTRAINT fk_users_created_by
-    FOREIGN KEY (created_by)
-    REFERENCES users(id)
+    CONSTRAINT fk_users_created_by
+        FOREIGN KEY (created_by)
+        REFERENCES users(id)
+);
+
+CREATE TABLE IF NOT EXISTS categories (
+    id BIGSERIAL PRIMARY KEY,
+    name VARCHAR(100) UNIQUE NOT NULL,
+    active BOOLEAN NOT NULL DEFAULT TRUE,
+    created_on TIMESTAMPTZ NOT NULL DEFAULT NOW()
 );
 
 CREATE TABLE IF NOT EXISTS tickets (
     id BIGSERIAL PRIMARY KEY,
     title VARCHAR(150) NOT NULL,
     description TEXT NOT NULL,
-    category VARCHAR(100) NOT NULL,
+    category_id BIGINT NOT NULL,
     priority VARCHAR(20) NOT NULL DEFAULT 'medium',
     status VARCHAR(30) NOT NULL DEFAULT 'open',
 
@@ -47,6 +54,10 @@ CREATE TABLE IF NOT EXISTS tickets (
                 'closed'
             )
         ),
+
+    CONSTRAINT fk_tickets_category
+        FOREIGN KEY (category_id)
+        REFERENCES categories(id),
 
     CONSTRAINT fk_tickets_created_by
         FOREIGN KEY (created_by)

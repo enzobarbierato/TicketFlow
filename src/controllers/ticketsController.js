@@ -1,27 +1,44 @@
 const ticketsService = require("../services/ticketsService");
 const usersService = require("../services/usersService");
+const categoriesService = require("../services/categoriesService");
 
 async function createTicket(req, res) {
   try {
     const {
       title,
       description,
-      category,
+      category_id,
       priority,
     } = req.body;
 
-    if (!title || !description || !category) {
+    const created_by = req.session.user.id;
+
+    if (!title || !description || !category_id) {
       return res.status(400).json({
         message: "Título, descrição e categoria são obrigatórios.",
+      });
+    }
+
+    const category = await categoriesService.getCategoryById(category_id);
+
+    if (!category) {
+      return res.status(404).json({
+        message: "Categoria não encontrada.",
+      });
+    }
+
+    if (!category.active) {
+      return res.status(400).json({
+        message: "Esta categoria está desativada.",
       });
     }
 
     const ticket = await ticketsService.createTicket({
       title,
       description,
-      category,
+      category_id,
       priority,
-      created_by: req.session.user.id,
+      created_by,
     });
 
     return res.status(201).json({
