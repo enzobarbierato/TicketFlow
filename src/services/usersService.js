@@ -42,6 +42,25 @@ async function createUser({
   return result.rows[0];
 }
 
+async function getUserById(userId) {
+  const query = `
+    SELECT
+      id,
+      name,
+      email,
+      department,
+      job_title,
+      role
+    FROM users
+    WHERE id = $1;
+  `;
+
+  const result = await pool.query(query, [userId]);
+
+  return result.rows[0] || null;
+}
+
 module.exports = {
   createUser,
+  getUserById,
 };

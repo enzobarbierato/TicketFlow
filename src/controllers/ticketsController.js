@@ -1,4 +1,5 @@
 const ticketsService = require("../services/ticketsService");
+const usersService = require("../services/usersService");
 
 async function createTicket(req, res) {
   try {
@@ -183,10 +184,62 @@ async function assignTicket(req, res) {
   }
 }
 
+async function assignTicketToUser(req, res) {
+  try {
+    const ticketId = req.params.id;
+    const { userId } = req.body;
+
+    if (!userId) {
+      return res.status(400).json({
+        message: "O usuário responsável é obrigatório.",
+      });
+    }
+
+    const ticket = await ticketsService.getTicketById(ticketId);
+
+    if (!ticket) {
+      return res.status(404).json({
+        message: "Chamado não encontrado.",
+      });
+    }
+
+    const supportUser = await usersService.getUserById(userId);
+
+    if (!supportUser) {
+      return res.status(404).json({
+        message: "Usuário não encontrado.",
+      });
+    }
+
+    if (supportUser.role !== "support") {
+      return res.status(400).json({
+        message: "O chamado só pode ser atribuído a um usuário de suporte.",
+      });
+    }
+
+    const assignedTicket = await ticketsService.assignTicketToUser(
+      ticketId,
+      userId
+    );
+
+    return res.status(200).json({
+      message: "Chamado atribuído ao suporte com sucesso.",
+      ticket: assignedTicket,
+    });
+  } catch (error) {
+    console.error(error);
+
+    return res.status(500).json({
+      message: "Erro interno do servidor.",
+    });
+  }
+}
+
 module.exports = {
   createTicket,
   getTickets,
   getTicketById,
   updateTicketStatus,
   assignTicket,
+  assignTicketToUser,
 };
