@@ -91,8 +91,39 @@ async function getTicketByIdAndUserId(ticketId, userId) {
   return result.rows[0] || null;
 }
 
+async function updateTicketStatus(ticketId, status) {
+  const query = `
+    UPDATE tickets
+    SET
+      status = $1::VARCHAR(30),
+      updated_on = NOW(),
+      closed_on = CASE
+        WHEN $1::VARCHAR(30) = 'closed' THEN NOW()
+        ELSE NULL
+      END
+    WHERE id = $2
+    RETURNING
+      id,
+      title,
+      description,
+      category,
+      priority,
+      status,
+      created_by,
+      assigned_to,
+      created_on,
+      updated_on,
+      closed_on;
+  `;
+
+  const result = await pool.query(query, [status, ticketId]);
+
+  return result.rows[0] || null;
+}
+
 module.exports = {
   createTicket,
   getTicketsByUserId,
   getTicketByIdAndUserId,
+  updateTicketStatus,
 };
