@@ -43,6 +43,23 @@ async function createUser(req, res) {
   }
 }
 
+async function getSupportUsers(req, res) {
+  try {
+    const supportUsers = await usersService.getSupportUsers();
+
+    return res.status(200).json({
+      users: supportUsers,
+    });
+  } catch (error) {
+    console.error(error);
+
+    return res.status(500).json({
+      message: "Erro interno do servidor.",
+    });
+  }
+}
+
 module.exports = {
   createUser,
+  getSupportUsers,
 };

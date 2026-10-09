@@ -60,7 +60,27 @@ async function getUserById(userId) {
   return result.rows[0] || null;
 }
 
+async function getSupportUsers() {
+  const query = `
+    SELECT
+      id,
+      name,
+      email,
+      department,
+      job_title,
+      role
+    FROM users
+    WHERE role = 'support'
+    ORDER BY name ASC;
+  `;
+
+  const result = await pool.query(query);
+
+  return result.rows;
+}
+
 module.exports = {
   createUser,
   getUserById,
+  getSupportUsers,
 };
