@@ -8,6 +8,7 @@ const ticketsRoutes = require("./routes/ticketsRoutes");
 const ticketMessagesRoutes = require("./routes/ticketMessagesRoutes");
 
 const app = express();
+app.set("json spaces", 2);
 
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));

@@ -82,8 +82,58 @@ async function getTicketById(req, res) {
   }
 }
 
+async function updateTicketStatus(req, res) {
+  try {
+    const ticketId = req.params.id;
+    const { status } = req.body;
+
+    const allowedStatuses = [
+      "open",
+      "in_progress",
+      "waiting_user",
+      "resolved",
+      "closed",
+    ];
+
+    if (!status) {
+      return res.status(400).json({
+        message: "O status é obrigatório.",
+      });
+    }
+
+    if (!allowedStatuses.includes(status)) {
+      return res.status(400).json({
+        message: "Status inválido.",
+      });
+    }
+
+    const ticket = await ticketsService.updateTicketStatus(
+      ticketId,
+      status
+    );
+
+    if (!ticket) {
+      return res.status(404).json({
+        message: "Chamado não encontrado.",
+      });
+    }
+
+    return res.status(200).json({
+      message: "Status do chamado atualizado com sucesso.",
+      ticket,
+    });
+  } catch (error) {
+    console.error(error);
+
+    return res.status(500).json({
+      message: "Erro interno do servidor.",
+    });
+  }
+}
+
 module.exports = {
   createTicket,
   getTickets,
   getTicketById,
+  updateTicketStatus,
 };
