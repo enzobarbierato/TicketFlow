@@ -245,6 +245,83 @@ async function assignTicketToUser(ticketId, userId) {
   return result.rows[0] || null;
 }
 
+async function getAccessibleTicketById({
+  ticketId,
+  userId,
+  userRole,
+}) {
+  let query;
+  let values;
+
+  if (userRole === "manager") {
+    query = `
+      SELECT
+        id,
+        title,
+        description,
+        category,
+        priority,
+        status,
+        created_by,
+        assigned_to,
+        created_on,
+        updated_on,
+        closed_on
+      FROM tickets
+      WHERE id = $1;
+    `;
+
+    values = [ticketId];
+  } else if (userRole === "support") {
+    query = `
+      SELECT
+        id,
+        title,
+        description,
+        category,
+        priority,
+        status,
+        created_by,
+        assigned_to,
+        created_on,
+        updated_on,
+        closed_on
+      FROM tickets
+      WHERE id = $1
+        AND (
+          assigned_to IS NULL
+          OR assigned_to = $2
+        );
+    `;
+
+    values = [ticketId, userId];
+  } else {
+    query = `
+      SELECT
+        id,
+        title,
+        description,
+        category,
+        priority,
+        status,
+        created_by,
+        assigned_to,
+        created_on,
+        updated_on,
+        closed_on
+      FROM tickets
+      WHERE id = $1
+        AND created_by = $2;
+    `;
+
+    values = [ticketId, userId];
+  }
+
+  const result = await pool.query(query, values);
+
+  return result.rows[0] || null;
+}
+
 module.exports = {
   createTicket,
   getTicketsByUserId,
@@ -252,6 +329,7 @@ module.exports = {
   getTicketById,
   getTicketsForSupport,
   getAllTickets,
+  getAccessibleTicketById,
   updateTicketStatus,
   assignTicket,
   assignTicketToUser,

@@ -68,11 +68,13 @@ async function getTicketById(req, res) {
   try {
     const ticketId = req.params.id;
     const userId = req.session.user.id;
+    const userRole = req.session.user.role;
 
-    const ticket = await ticketsService.getTicketByIdAndUserId(
+    const ticket = await ticketsService.getAccessibleTicketById({
       ticketId,
-      userId
-    );
+      userId,
+      userRole,
+    });
 
     if (!ticket) {
       return res.status(404).json({
