@@ -131,9 +131,53 @@ async function updateTicketStatus(req, res) {
   }
 }
 
+async function assignTicket(req, res) {
+  try {
+    const ticketId = req.params.id;
+    const userId = req.session.user.id;
+
+    const ticket = await ticketsService.getTicketById(ticketId);
+
+    if (!ticket) {
+      return res.status(404).json({
+        message: "Chamado não encontrado.",
+      });
+    }
+
+    if (ticket.assigned_to) {
+      return res.status(409).json({
+        message: "Este chamado já possui um responsável.",
+      });
+    }
+
+    const assignedTicket = await ticketsService.assignTicket(
+      ticketId,
+      userId
+    );
+
+    if (!assignedTicket) {
+      return res.status(409).json({
+        message: "Não foi possível assumir o chamado.",
+      });
+    }
+
+    return res.status(200).json({
+      message: "Chamado atribuído com sucesso.",
+      ticket: assignedTicket,
+    });
+  } catch (error) {
+    console.error(error);
+
+    return res.status(500).json({
+      message: "Erro interno do servidor.",
+    });
+  }
+}
+
 module.exports = {
   createTicket,
   getTickets,
   getTicketById,
   updateTicketStatus,
+  assignTicket,
 };
