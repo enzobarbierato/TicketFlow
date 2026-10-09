@@ -121,9 +121,61 @@ async function updateTicketStatus(ticketId, status) {
   return result.rows[0] || null;
 }
 
+async function assignTicket(ticketId, userId) {
+  const query = `
+    UPDATE tickets
+    SET
+      assigned_to = $1,
+      updated_on = NOW()
+    WHERE id = $2
+      AND assigned_to IS NULL
+    RETURNING
+      id,
+      title,
+      description,
+      category,
+      priority,
+      status,
+      created_by,
+      assigned_to,
+      created_on,
+      updated_on,
+      closed_on;
+  `;
+
+  const result = await pool.query(query, [userId, ticketId]);
+
+  return result.rows[0] || null;
+}
+
+async function getTicketById(ticketId) {
+  const query = `
+    SELECT
+      id,
+      title,
+      description,
+      category,
+      priority,
+      status,
+      created_by,
+      assigned_to,
+      created_on,
+      updated_on,
+      closed_on
+    FROM tickets
+    WHERE id = $1;
+  `;
+
+  const result = await pool.query(query, [ticketId]);
+
+  return result.rows[0] || null;
+}
+
 module.exports = {
   createTicket,
   getTicketsByUserId,
   getTicketByIdAndUserId,
+  getTicketById,
   updateTicketStatus,
+  assignTicket,
 };

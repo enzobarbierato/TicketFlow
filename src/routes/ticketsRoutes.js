@@ -6,7 +6,9 @@ const requireRole = require("../middlewares/requireRole");
 const router = express.Router();
 
 router.post("/", requireAuth, ticketsController.createTicket);
+
 router.get("/", requireAuth, ticketsController.getTickets);
+
 router.get("/:id", requireAuth, ticketsController.getTicketById);
 
 router.patch(
@@ -14,6 +16,13 @@ router.patch(
   requireAuth,
   requireRole("support", "manager"),
   ticketsController.updateTicketStatus
+);
+
+router.patch(
+  "/:id/assign",
+  requireAuth,
+  requireRole("support", "manager"),
+  ticketsController.assignTicket
 );
 
 module.exports = router;
