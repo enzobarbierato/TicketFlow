@@ -11,9 +11,12 @@ CREATE TABLE IF NOT EXISTS users (
     created_by BIGINT,
     role VARCHAR(20) NOT NULL DEFAULT 'user',
 
-    CONSTRAINT fk_users_created_by
-        FOREIGN KEY (created_by)
-        REFERENCES users(id)
+CONSTRAINT chk_users_role
+    CHECK (role IN ('user', 'support', 'manager')),
+
+CONSTRAINT fk_users_created_by
+    FOREIGN KEY (created_by)
+    REFERENCES users(id)
 );
 
 CREATE TABLE IF NOT EXISTS tickets (
@@ -30,6 +33,20 @@ CREATE TABLE IF NOT EXISTS tickets (
     created_on TIMESTAMPTZ NOT NULL DEFAULT NOW(),
     updated_on TIMESTAMPTZ NOT NULL DEFAULT NOW(),
     closed_on TIMESTAMPTZ,
+
+    CONSTRAINT chk_tickets_priority
+        CHECK (priority IN ('low', 'medium', 'high', 'critical')),
+
+    CONSTRAINT chk_tickets_status
+        CHECK (
+            status IN (
+                'open',
+                'in_progress',
+                'waiting_user',
+                'resolved',
+                'closed'
+            )
+        ),
 
     CONSTRAINT fk_tickets_created_by
         FOREIGN KEY (created_by)
