@@ -5,6 +5,7 @@ const sessionMiddleware = require("./config/session");
 const usersRoutes = require("./routes/usersRoutes");
 const authRoutes = require("./routes/authRoutes");
 const ticketsRoutes = require("./routes/ticketsRoutes");
+const ticketMessagesRoutes = require("./routes/ticketMessagesRoutes");
 
 const app = express();
 
@@ -20,5 +21,6 @@ app.get("/", (req, res) => {
 app.use("/api/users", usersRoutes);
 app.use("/api/auth", authRoutes);
 app.use("/api/tickets", ticketsRoutes);
+app.use("/api/tickets", ticketMessagesRoutes);
 
 module.exports = app;
