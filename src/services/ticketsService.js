@@ -322,6 +322,32 @@ async function getAccessibleTicketById({
   return result.rows[0] || null;
 }
 
+async function updateTicketPriority(ticketId, priority) {
+  const query = `
+    UPDATE tickets
+    SET
+      priority = $1,
+      updated_on = NOW()
+    WHERE id = $2
+    RETURNING
+      id,
+      title,
+      description,
+      category,
+      priority,
+      status,
+      created_by,
+      assigned_to,
+      created_on,
+      updated_on,
+      closed_on;
+  `;
+
+  const result = await pool.query(query, [priority, ticketId]);
+
+  return result.rows[0] || null;
+}
+
 module.exports = {
   createTicket,
   getTicketsByUserId,
@@ -331,6 +357,7 @@ module.exports = {
   getAllTickets,
   getAccessibleTicketById,
   updateTicketStatus,
+  updateTicketPriority,
   assignTicket,
   assignTicketToUser,
 };
