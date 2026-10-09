@@ -39,8 +39,17 @@ async function createTicket(req, res) {
 async function getTickets(req, res) {
   try {
     const userId = req.session.user.id;
+    const userRole = req.session.user.role;
 
-    const tickets = await ticketsService.getTicketsByUserId(userId);
+    let tickets;
+
+    if (userRole === "manager") {
+      tickets = await ticketsService.getAllTickets();
+    } else if (userRole === "support") {
+      tickets = await ticketsService.getTicketsForSupport(userId);
+    } else {
+      tickets = await ticketsService.getTicketsByUserId(userId);
+    }
 
     return res.status(200).json({
       tickets,

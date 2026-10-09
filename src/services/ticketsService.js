@@ -171,11 +171,61 @@ async function getTicketById(ticketId) {
   return result.rows[0] || null;
 }
 
+async function getTicketsForSupport(userId) {
+  const query = `
+    SELECT
+      id,
+      title,
+      description,
+      category,
+      priority,
+      status,
+      created_by,
+      assigned_to,
+      created_on,
+      updated_on,
+      closed_on
+    FROM tickets
+    WHERE assigned_to IS NULL
+       OR assigned_to = $1
+    ORDER BY created_on DESC;
+  `;
+
+  const result = await pool.query(query, [userId]);
+
+  return result.rows;
+}
+
+async function getAllTickets() {
+  const query = `
+    SELECT
+      id,
+      title,
+      description,
+      category,
+      priority,
+      status,
+      created_by,
+      assigned_to,
+      created_on,
+      updated_on,
+      closed_on
+    FROM tickets
+    ORDER BY created_on DESC;
+  `;
+
+  const result = await pool.query(query);
+
+  return result.rows;
+}
+
 module.exports = {
   createTicket,
   getTicketsByUserId,
   getTicketByIdAndUserId,
   getTicketById,
+  getTicketsForSupport,
+  getAllTickets,
   updateTicketStatus,
   assignTicket,
 };
