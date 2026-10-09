@@ -237,11 +237,60 @@ async function assignTicketToUser(req, res) {
   }
 }
 
+async function updateTicketPriority(req, res) {
+  try {
+    const ticketId = req.params.id;
+    const { priority } = req.body;
+
+    const allowedPriorities = [
+      "low",
+      "medium",
+      "high",
+      "critical",
+    ];
+
+    if (!priority) {
+      return res.status(400).json({
+        message: "A prioridade é obrigatória.",
+      });
+    }
+
+    if (!allowedPriorities.includes(priority)) {
+      return res.status(400).json({
+        message: "Prioridade inválida.",
+      });
+    }
+
+    const ticket = await ticketsService.updateTicketPriority(
+      ticketId,
+      priority
+    );
+
+    if (!ticket) {
+      return res.status(404).json({
+        message: "Chamado não encontrado.",
+      });
+    }
+
+    return res.status(200).json({
+      message: "Prioridade do chamado atualizada com sucesso.",
+      ticket,
+    });
+  } catch (error) {
+    console.error(error);
+
+    return res.status(500).json({
+      message: "Erro interno do servidor.",
+    });
+  }
+}
+
 module.exports = {
   createTicket,
   getTickets,
   getTicketById,
   updateTicketStatus,
+  updateTicketPriority,
   assignTicket,
   assignTicketToUser,
 };

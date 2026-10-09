@@ -19,6 +19,13 @@ router.patch(
 );
 
 router.patch(
+  "/:id/priority",
+  requireAuth,
+  requireRole("manager"),
+  ticketsController.updateTicketPriority
+);
+
+router.patch(
   "/:id/assign",
   requireAuth,
   requireRole("support"),
