@@ -43,6 +43,31 @@ async function createTicket({
   return result.rows[0];
 }
 
+async function getTicketsByUserId(userId) {
+  const query = `
+    SELECT
+      id,
+      title,
+      description,
+      category,
+      priority,
+      status,
+      created_by,
+      assigned_to,
+      created_on,
+      updated_on,
+      closed_on
+    FROM tickets
+    WHERE created_by = $1
+    ORDER BY created_on DESC;
+  `;
+
+  const result = await pool.query(query, [userId]);
+
+  return result.rows;
+}
+
 module.exports = {
   createTicket,
+  getTicketsByUserId,
 };

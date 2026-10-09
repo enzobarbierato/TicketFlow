@@ -36,6 +36,25 @@ async function createTicket(req, res) {
   }
 }
 
+async function getTickets(req, res) {
+  try {
+    const userId = req.session.user.id;
+
+    const tickets = await ticketsService.getTicketsByUserId(userId);
+
+    return res.status(200).json({
+      tickets,
+    });
+  } catch (error) {
+    console.error(error);
+
+    return res.status(500).json({
+      message: "Erro interno do servidor.",
+    });
+  }
+}
+
 module.exports = {
   createTicket,
+  getTickets,
 };
