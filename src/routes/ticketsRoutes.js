@@ -21,8 +21,15 @@ router.patch(
 router.patch(
   "/:id/assign",
   requireAuth,
-  requireRole("support", "manager"),
+  requireRole("support"),
   ticketsController.assignTicket
+);
+
+router.patch(
+  "/:id/assign-user",
+  requireAuth,
+  requireRole("manager"),
+  ticketsController.assignTicketToUser
 );
 
 module.exports = router;

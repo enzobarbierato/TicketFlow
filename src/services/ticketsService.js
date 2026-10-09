@@ -219,6 +219,32 @@ async function getAllTickets() {
   return result.rows;
 }
 
+async function assignTicketToUser(ticketId, userId) {
+  const query = `
+    UPDATE tickets
+    SET
+      assigned_to = $1,
+      updated_on = NOW()
+    WHERE id = $2
+    RETURNING
+      id,
+      title,
+      description,
+      category,
+      priority,
+      status,
+      created_by,
+      assigned_to,
+      created_on,
+      updated_on,
+      closed_on;
+  `;
+
+  const result = await pool.query(query, [userId, ticketId]);
+
+  return result.rows[0] || null;
+}
+
 module.exports = {
   createTicket,
   getTicketsByUserId,
@@ -228,4 +254,5 @@ module.exports = {
   getAllTickets,
   updateTicketStatus,
   assignTicket,
+  assignTicketToUser,
 };
