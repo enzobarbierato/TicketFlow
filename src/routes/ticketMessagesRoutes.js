@@ -10,4 +10,10 @@ router.post(
   ticketMessagesController.createMessage
 );
 
+router.get(
+  "/:ticketId/messages",
+  requireAuth,
+  ticketMessagesController.getMessages
+);
+
 module.exports = router;
