@@ -1,5 +1,10 @@
 const categoriesService = require("../services/categoriesService");
 
+const {
+  isNonEmptyString,
+} = require("../utils/validators");
+
+
 async function getActiveCategories(req, res) {
   try {
     const categories = await categoriesService.getActiveCategories();
@@ -16,18 +21,27 @@ async function getActiveCategories(req, res) {
   }
 }
 
+
 async function createCategory(req, res) {
   try {
     const { name } = req.body;
 
-    if (!name || !name.trim()) {
+    if (!isNonEmptyString(name)) {
       return res.status(400).json({
         message: "O nome da categoria é obrigatório.",
       });
     }
 
+    const normalizedName = name.trim();
+
+    if (normalizedName.length > 100) {
+      return res.status(400).json({
+        message: "O nome da categoria deve ter no máximo 100 caracteres.",
+      });
+    }
+
     const category = await categoriesService.createCategory(
-      name.trim()
+      normalizedName
     );
 
     return res.status(201).json({
@@ -48,6 +62,7 @@ async function createCategory(req, res) {
     });
   }
 }
+
 
 async function updateCategoryStatus(req, res) {
   try {
@@ -86,20 +101,29 @@ async function updateCategoryStatus(req, res) {
   }
 }
 
+
 async function updateCategoryName(req, res) {
   try {
     const categoryId = req.params.id;
     const { name } = req.body;
 
-    if (!name || !name.trim()) {
+    if (!isNonEmptyString(name)) {
       return res.status(400).json({
         message: "O nome da categoria é obrigatório.",
       });
     }
 
+    const normalizedName = name.trim();
+
+    if (normalizedName.length > 100) {
+      return res.status(400).json({
+        message: "O nome da categoria deve ter no máximo 100 caracteres.",
+      });
+    }
+
     const category = await categoriesService.updateCategoryName(
       categoryId,
-      name.trim()
+      normalizedName
     );
 
     if (!category) {
@@ -126,6 +150,7 @@ async function updateCategoryName(req, res) {
     });
   }
 }
+
 
 module.exports = {
   getActiveCategories,
