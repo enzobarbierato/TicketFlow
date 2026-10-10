@@ -70,9 +70,38 @@ async function getSupportStatistics(req, res) {
   }
 }
 
+async function getSupportTickets(req, res) {
+  try {
+    const support = await managementService.getSupportSummary(req.params.id);
+
+    if (!support) {
+      return res.status(404).json({
+        message: "Funcionário de suporte não encontrado.",
+      });
+    }
+
+    const tickets = await managementService.getSupportTickets(req.params.id);
+
+    return res.status(200).json({
+      support: {
+        id: support.id,
+        name: support.name,
+      },
+      tickets,
+    });
+  } catch (error) {
+    console.error(error);
+
+    return res.status(500).json({
+      message: "Erro interno do servidor.",
+    });
+  }
+}
+
 module.exports = {
   getSummary,
   getTicketsByCategory,
   getSupportSummary,
   getSupportStatistics,
+  getSupportTickets,
 };

@@ -222,9 +222,52 @@ async function getSupportStatistics() {
   return result.rows;
 }
 
+async function getSupportTickets(userId) {
+  const query = `
+    SELECT
+      t.id,
+      t.title,
+      t.category_id,
+      c.name AS category_name,
+      t.priority,
+      t.status,
+      t.created_by,
+      creator.name AS created_by_name,
+      t.assigned_to,
+      t.created_on,
+      t.updated_on,
+      t.closed_on
+
+    FROM tickets t
+
+    INNER JOIN categories c
+      ON c.id = t.category_id
+
+    INNER JOIN users creator
+      ON creator.id = t.created_by
+
+    WHERE t.assigned_to = $1
+
+    ORDER BY
+      CASE t.status
+        WHEN 'open' THEN 1
+        WHEN 'in_progress' THEN 2
+        WHEN 'waiting_user' THEN 3
+        WHEN 'resolved' THEN 4
+        WHEN 'closed' THEN 5
+      END,
+      t.updated_on DESC;
+  `;
+
+  const result = await pool.query(query, [userId]);
+
+  return result.rows;
+}
+
 module.exports = {
   getManagementSummary,
   getTicketsByCategory,
   getSupportSummary,
   getSupportStatistics,
+  getSupportTickets,
 };
