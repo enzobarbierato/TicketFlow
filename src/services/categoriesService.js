@@ -64,9 +64,27 @@ async function updateCategoryStatus(categoryId, active) {
   return result.rows[0] || null;
 }
 
+async function updateCategoryName(categoryId, name) {
+  const query = `
+    UPDATE categories
+    SET name = $1
+    WHERE id = $2
+    RETURNING
+      id,
+      name,
+      active,
+      created_on;
+  `;
+
+  const result = await pool.query(query, [name, categoryId]);
+
+  return result.rows[0] || null;
+}
+
 module.exports = {
   getCategoryById,
   getActiveCategories,
   createCategory,
   updateCategoryStatus,
+  updateCategoryName,
 };
