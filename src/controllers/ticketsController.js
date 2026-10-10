@@ -82,26 +82,65 @@ async function getTickets(req, res) {
   }
 }
 
-async function getTicketById(req, res) {
+async function getTickets(req, res) {
   try {
-    const ticketId = req.params.id;
     const userId = req.session.user.id;
     const userRole = req.session.user.role;
 
-    const ticket = await ticketsService.getAccessibleTicketById({
-      ticketId,
-      userId,
-      userRole,
-    });
+    const {
+      status,
+      priority,
+      category_id,
+      search,
+    } = req.query;
 
-    if (!ticket) {
-      return res.status(404).json({
-        message: "Chamado não encontrado.",
+    const allowedStatuses = [
+      "open",
+      "in_progress",
+      "waiting_user",
+      "resolved",
+      "closed",
+    ];
+
+    const allowedPriorities = [
+      "low",
+      "medium",
+      "high",
+      "critical",
+    ];
+
+    if (status && !allowedStatuses.includes(status)) {
+      return res.status(400).json({
+        message: "Filtro de status inválido.",
       });
     }
 
+    if (priority && !allowedPriorities.includes(priority)) {
+      return res.status(400).json({
+        message: "Filtro de prioridade inválido.",
+      });
+    }
+
+    if (
+      category_id &&
+      (!/^\d+$/.test(category_id) || Number(category_id) <= 0)
+    ) {
+      return res.status(400).json({
+        message: "Filtro de categoria inválido.",
+      });
+    }
+
+    const tickets = await ticketsService.getFilteredTickets({
+      userId,
+      userRole,
+      status,
+      priority,
+      categoryId: category_id,
+      search: search?.trim() || undefined,
+    });
+
     return res.status(200).json({
-      ticket,
+      tickets,
     });
   } catch (error) {
     console.error(error);
@@ -177,6 +216,36 @@ async function updateTicketStatus(req, res) {
 
     return res.status(200).json({
       message: "Status do chamado atualizado com sucesso.",
+      ticket,
+    });
+  } catch (error) {
+    console.error(error);
+
+    return res.status(500).json({
+      message: "Erro interno do servidor.",
+    });
+  }
+}
+
+async function getTicketById(req, res) {
+  try {
+    const ticketId = req.params.id;
+    const userId = req.session.user.id;
+    const userRole = req.session.user.role;
+
+    const ticket = await ticketsService.getAccessibleTicketById({
+      ticketId,
+      userId,
+      userRole,
+    });
+
+    if (!ticket) {
+      return res.status(404).json({
+        message: "Chamado não encontrado.",
+      });
+    }
+
+    return res.status(200).json({
       ticket,
     });
   } catch (error) {

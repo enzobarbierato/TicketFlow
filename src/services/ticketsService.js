@@ -427,6 +427,101 @@ async function assignTicketToUser(ticketId, userId) {
   return result.rows[0] || null;
 }
 
+async function getFilteredTickets({
+  userId,
+  userRole,
+  status,
+  priority,
+  categoryId,
+  search,
+}) {
+  const conditions = [];
+  const values = [];
+
+  function addValue(value) {
+    values.push(value);
+    return `$${values.length}`;
+  }
+
+  // Controle de acesso
+  if (userRole === "user") {
+    const userParam = addValue(userId);
+    conditions.push(`t.created_by = ${userParam}`);
+  }
+
+  if (userRole === "support") {
+    const userParam = addValue(userId);
+
+    conditions.push(`
+      (
+        t.assigned_to IS NULL
+        OR t.assigned_to = ${userParam}
+      )
+    `);
+  }
+
+  // Filtro por status
+  if (status) {
+    const statusParam = addValue(status);
+    conditions.push(`t.status = ${statusParam}`);
+  }
+
+  // Filtro por prioridade
+  if (priority) {
+    const priorityParam = addValue(priority);
+    conditions.push(`t.priority = ${priorityParam}`);
+  }
+
+  // Filtro por categoria
+  if (categoryId) {
+    const categoryParam = addValue(categoryId);
+    conditions.push(`t.category_id = ${categoryParam}`);
+  }
+
+  // Busca textual
+  if (search) {
+    const searchParam = addValue(`%${search}%`);
+
+    conditions.push(`
+      (
+        t.title ILIKE ${searchParam}
+        OR t.description ILIKE ${searchParam}
+        OR c.name ILIKE ${searchParam}
+      )
+    `);
+  }
+
+  const whereClause =
+    conditions.length > 0
+      ? `WHERE ${conditions.join(" AND ")}`
+      : "";
+
+  const query = `
+    SELECT
+      t.id,
+      t.title,
+      t.description,
+      t.category_id,
+      c.name AS category_name,
+      t.priority,
+      t.status,
+      t.created_by,
+      t.assigned_to,
+      t.created_on,
+      t.updated_on,
+      t.closed_on
+    FROM tickets t
+    INNER JOIN categories c
+      ON c.id = t.category_id
+    ${whereClause}
+    ORDER BY t.created_on DESC;
+  `;
+
+  const result = await pool.query(query, values);
+
+  return result.rows;
+}
+
 module.exports = {
   createTicket,
   getTicketsByUserId,
@@ -435,6 +530,7 @@ module.exports = {
   getTicketsForSupport,
   getAllTickets,
   getAccessibleTicketById,
+  getFilteredTickets,
   updateTicketStatus,
   updateTicketPriority,
   assignTicket,
