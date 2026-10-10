@@ -56,6 +56,175 @@ async function getManagementSummary() {
   };
 }
 
+async function getTicketsByCategory() {
+  const query = `
+    SELECT
+      c.id AS category_id,
+      c.name AS category_name,
+
+      COUNT(t.id)::INTEGER AS total,
+
+      COUNT(t.id) FILTER (
+        WHERE t.status = 'open'
+      )::INTEGER AS open,
+
+      COUNT(t.id) FILTER (
+        WHERE t.status = 'in_progress'
+      )::INTEGER AS in_progress,
+
+      COUNT(t.id) FILTER (
+        WHERE t.status = 'waiting_user'
+      )::INTEGER AS waiting_user,
+
+      COUNT(t.id) FILTER (
+        WHERE t.status = 'resolved'
+      )::INTEGER AS resolved,
+
+      COUNT(t.id) FILTER (
+        WHERE t.status = 'closed'
+      )::INTEGER AS closed
+
+    FROM categories c
+
+    LEFT JOIN tickets t
+      ON t.category_id = c.id
+
+    GROUP BY
+      c.id,
+      c.name
+
+    ORDER BY total DESC, c.name ASC;
+  `;
+
+  const result = await pool.query(query);
+
+  return result.rows;
+}
+
+async function getSupportSummary(userId) {
+  const query = `
+    SELECT
+      u.id,
+      u.name,
+      u.email,
+      u.department,
+      u.job_title,
+
+      COUNT(t.id)::INTEGER AS total,
+
+      COUNT(t.id) FILTER (
+        WHERE t.status = 'open'
+      )::INTEGER AS open,
+
+      COUNT(t.id) FILTER (
+        WHERE t.status = 'in_progress'
+      )::INTEGER AS in_progress,
+
+      COUNT(t.id) FILTER (
+        WHERE t.status = 'waiting_user'
+      )::INTEGER AS waiting_user,
+
+      COUNT(t.id) FILTER (
+        WHERE t.status = 'resolved'
+      )::INTEGER AS resolved,
+
+      COUNT(t.id) FILTER (
+        WHERE t.status = 'closed'
+      )::INTEGER AS closed,
+
+      COUNT(t.id) FILTER (
+        WHERE t.priority = 'critical'
+          AND t.status <> 'closed'
+      )::INTEGER AS critical
+
+    FROM users u
+
+    LEFT JOIN tickets t
+      ON t.assigned_to = u.id
+
+    WHERE u.id = $1
+      AND u.role = 'support'
+
+    GROUP BY
+      u.id,
+      u.name,
+      u.email,
+      u.department,
+      u.job_title;
+  `;
+
+  const result = await pool.query(query, [userId]);
+
+  return result.rows[0] || null;
+}
+
+async function getSupportStatistics() {
+  const query = `
+    SELECT
+      u.id,
+      u.name,
+      u.email,
+      u.department,
+      u.job_title,
+
+      COUNT(t.id)::INTEGER AS total,
+
+      COUNT(t.id) FILTER (
+        WHERE t.status <> 'closed'
+      )::INTEGER AS active,
+
+      COUNT(t.id) FILTER (
+        WHERE t.status = 'open'
+      )::INTEGER AS open,
+
+      COUNT(t.id) FILTER (
+        WHERE t.status = 'in_progress'
+      )::INTEGER AS in_progress,
+
+      COUNT(t.id) FILTER (
+        WHERE t.status = 'waiting_user'
+      )::INTEGER AS waiting_user,
+
+      COUNT(t.id) FILTER (
+        WHERE t.status = 'resolved'
+      )::INTEGER AS resolved,
+
+      COUNT(t.id) FILTER (
+        WHERE t.status = 'closed'
+      )::INTEGER AS closed,
+
+      COUNT(t.id) FILTER (
+        WHERE t.priority = 'critical'
+          AND t.status <> 'closed'
+      )::INTEGER AS critical
+
+    FROM users u
+
+    LEFT JOIN tickets t
+      ON t.assigned_to = u.id
+
+    WHERE u.role = 'support'
+
+    GROUP BY
+      u.id,
+      u.name,
+      u.email,
+      u.department,
+      u.job_title
+
+    ORDER BY
+      active DESC,
+      u.name ASC;
+  `;
+
+  const result = await pool.query(query);
+
+  return result.rows;
+}
+
 module.exports = {
   getManagementSummary,
+  getTicketsByCategory,
+  getSupportSummary,
+  getSupportStatistics,
 };
