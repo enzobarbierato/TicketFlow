@@ -31,7 +31,24 @@ async function getActiveCategories() {
   return result.rows;
 }
 
+async function createCategory(name) {
+  const query = `
+    INSERT INTO categories (name)
+    VALUES ($1)
+    RETURNING
+      id,
+      name,
+      active,
+      created_on;
+  `;
+
+  const result = await pool.query(query, [name]);
+
+  return result.rows[0];
+}
+
 module.exports = {
   getCategoryById,
   getActiveCategories,
+  createCategory,
 };
