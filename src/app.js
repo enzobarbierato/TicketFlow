@@ -8,6 +8,7 @@ const ticketsRoutes = require("./routes/ticketsRoutes");
 const ticketMessagesRoutes = require("./routes/ticketMessagesRoutes");
 const categoriesRoutes = require("./routes/categoriesRoutes");
 const dashboardRoutes = require("./routes/dashboardRoutes");
+const managementRoutes = require("./routes/managementRoutes");
 
 const app = express();
 app.set("json spaces", 2);
@@ -27,5 +28,6 @@ app.use("/api/tickets", ticketsRoutes);
 app.use("/api/tickets", ticketMessagesRoutes);
 app.use("/api/categories", categoriesRoutes);
 app.use("/api/dashboard", dashboardRoutes);
+app.use("/api/management", managementRoutes);
 
 module.exports = app;
