@@ -270,7 +270,27 @@ async function getAccessibleTicketById({
   return result.rows[0] || null;
 }
 
-async function updateTicketStatus(ticketId, status) {
+async function updateTicketStatus({
+  ticketId,
+  status,
+  userId,
+  userRole,
+}) {
+  let accessCondition = "";
+  let values;
+
+  if (userRole === "manager") {
+    accessCondition = "id = $2";
+    values = [status, ticketId];
+  } else {
+    accessCondition = `
+      id = $2
+      AND assigned_to = $3
+    `;
+
+    values = [status, ticketId, userId];
+  }
+
   const query = `
     WITH updated_ticket AS (
       UPDATE tickets
@@ -281,7 +301,7 @@ async function updateTicketStatus(ticketId, status) {
           WHEN $1::VARCHAR(30) = 'closed' THEN NOW()
           ELSE NULL
         END
-      WHERE id = $2
+      WHERE ${accessCondition}
       RETURNING *
     )
     SELECT
@@ -302,7 +322,7 @@ async function updateTicketStatus(ticketId, status) {
       ON c.id = t.category_id;
   `;
 
-  const result = await pool.query(query, [status, ticketId]);
+  const result = await pool.query(query, values);
 
   return result.rows[0] || null;
 }

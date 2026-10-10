@@ -114,6 +114,8 @@ async function getTicketById(req, res) {
 async function updateTicketStatus(req, res) {
   try {
     const ticketId = req.params.id;
+    const userId = req.session.user.id;
+    const userRole = req.session.user.role;
     const { status } = req.body;
 
     const allowedStatuses = [
@@ -136,14 +138,16 @@ async function updateTicketStatus(req, res) {
       });
     }
 
-    const ticket = await ticketsService.updateTicketStatus(
+    const ticket = await ticketsService.updateTicketStatus({
       ticketId,
-      status
-    );
+      status,
+      userId,
+      userRole,
+    });
 
     if (!ticket) {
       return res.status(404).json({
-        message: "Chamado não encontrado.",
+        message: "Chamado não encontrado ou sem permissão para alteração.",
       });
     }
 
