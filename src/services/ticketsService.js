@@ -434,6 +434,8 @@ async function getFilteredTickets({
   priority,
   categoryId,
   search,
+  page,
+  limit,
 }) {
   const conditions = [];
   const values = [];
@@ -496,6 +498,23 @@ async function getFilteredTickets({
       ? `WHERE ${conditions.join(" AND ")}`
       : "";
 
+  // Quantidade total antes da paginação
+  const countQuery = `
+    SELECT COUNT(*)::INTEGER AS total
+    FROM tickets t
+    INNER JOIN categories c
+      ON c.id = t.category_id
+    ${whereClause};
+  `;
+
+  const countResult = await pool.query(countQuery, values);
+  const total = countResult.rows[0].total;
+
+  const offset = (page - 1) * limit;
+
+  const limitParam = addValue(limit);
+  const offsetParam = addValue(offset);
+
   const query = `
     SELECT
       t.id,
@@ -514,12 +533,17 @@ async function getFilteredTickets({
     INNER JOIN categories c
       ON c.id = t.category_id
     ${whereClause}
-    ORDER BY t.created_on DESC;
+    ORDER BY t.created_on DESC
+    LIMIT ${limitParam}
+    OFFSET ${offsetParam};
   `;
 
   const result = await pool.query(query, values);
 
-  return result.rows;
+  return {
+    tickets: result.rows,
+    total,
+  };
 }
 
 module.exports = {

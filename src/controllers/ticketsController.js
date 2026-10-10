@@ -92,6 +92,8 @@ async function getTickets(req, res) {
       priority,
       category_id,
       search,
+      page = "1",
+      limit = "10",
     } = req.query;
 
     const allowedStatuses = [
@@ -130,17 +132,46 @@ async function getTickets(req, res) {
       });
     }
 
-    const tickets = await ticketsService.getFilteredTickets({
+    if (!/^\d+$/.test(page) || Number(page) <= 0) {
+      return res.status(400).json({
+        message: "Página inválida.",
+      });
+    }
+
+    if (
+      !/^\d+$/.test(limit) ||
+      Number(limit) <= 0 ||
+      Number(limit) > 100
+    ) {
+      return res.status(400).json({
+        message: "Limite inválido. Utilize um valor entre 1 e 100.",
+      });
+    }
+
+    const currentPage = Number(page);
+    const currentLimit = Number(limit);
+
+    const result = await ticketsService.getFilteredTickets({
       userId,
       userRole,
       status,
       priority,
       categoryId: category_id,
       search: search?.trim() || undefined,
+      page: currentPage,
+      limit: currentLimit,
     });
 
+    const totalPages = Math.ceil(result.total / currentLimit);
+
     return res.status(200).json({
-      tickets,
+      tickets: result.tickets,
+      pagination: {
+        page: currentPage,
+        limit: currentLimit,
+        total: result.total,
+        total_pages: totalPages,
+      },
     });
   } catch (error) {
     console.error(error);
