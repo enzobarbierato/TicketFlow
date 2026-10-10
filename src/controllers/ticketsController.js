@@ -1,6 +1,7 @@
 const ticketsService = require("../services/ticketsService");
 const usersService = require("../services/usersService");
 const categoriesService = require("../services/categoriesService");
+const ticketStatusService = require("../services/ticketStatusService");
 
 async function createTicket(req, res) {
   try {
@@ -135,6 +136,29 @@ async function updateTicketStatus(req, res) {
     if (!allowedStatuses.includes(status)) {
       return res.status(400).json({
         message: "Status inválido.",
+      });
+    }
+
+    const currentTicket = await ticketsService.getAccessibleTicketById({
+      ticketId,
+      userId,
+      userRole,
+    });
+
+    if (!currentTicket) {
+      return res.status(404).json({
+        message: "Chamado não encontrado ou sem permissão para alteração.",
+      });
+    }
+
+    const canTransition = ticketStatusService.canTransitionStatus(
+      currentTicket.status,
+      status
+    );
+
+    if (!canTransition) {
+      return res.status(400).json({
+        message: `Não é permitido alterar o status de ${currentTicket.status} para ${status}.`,
       });
     }
 
