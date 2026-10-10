@@ -25,4 +25,11 @@ router.patch(
   categoriesController.updateCategoryStatus
 );
 
+router.patch(
+  "/:id",
+  requireAuth,
+  requireRole("manager"),
+  categoriesController.updateCategoryName
+);
+
 module.exports = router;
