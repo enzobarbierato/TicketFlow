@@ -1,16 +1,28 @@
 const authService = require("../services/authService");
+const {isNonEmptyString,isValidEmail,} = require("../utils/validators");
 
 async function login(req, res) {
   try {
     const { email, password } = req.body;
 
-    if (!email || !password) {
+    if (!isValidEmail(email)) {
       return res.status(400).json({
-        message: "E-mail e senha são obrigatórios.",
+        message: "E-mail inválido.",
       });
     }
 
-    const user = await authService.authenticateUser(email, password);
+    if (!isNonEmptyString(password)) {
+      return res.status(400).json({
+        message: "A senha é obrigatória.",
+      });
+    }
+
+    const normalizedEmail = email.trim().toLowerCase();
+
+    const user = await authService.authenticateUser(
+      normalizedEmail,
+      password
+    );
 
     if (!user) {
       return res.status(401).json({

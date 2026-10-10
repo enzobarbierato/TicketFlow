@@ -2,6 +2,7 @@ const ticketsService = require("../services/ticketsService");
 const usersService = require("../services/usersService");
 const categoriesService = require("../services/categoriesService");
 const ticketStatusService = require("../services/ticketStatusService");
+const {isNonEmptyString,isPositiveInteger,} = require("../utils/validators");
 
 async function createTicket(req, res) {
   try {
@@ -14,13 +15,42 @@ async function createTicket(req, res) {
 
     const created_by = req.session.user.id;
 
-    if (!title || !description || !category_id) {
+    const allowedPriorities = [
+      "low",
+      "medium",
+      "high",
+      "critical",
+    ];
+
+    if (!isNonEmptyString(title)) {
       return res.status(400).json({
-        message: "Título, descrição e categoria são obrigatórios.",
+        message: "O título é obrigatório.",
       });
     }
 
-    const category = await categoriesService.getCategoryById(category_id);
+    if (!isNonEmptyString(description)) {
+      return res.status(400).json({
+        message: "A descrição é obrigatória.",
+      });
+    }
+
+    if (!isPositiveInteger(category_id)) {
+      return res.status(400).json({
+        message: "Categoria inválida.",
+      });
+    }
+
+    if (
+      priority &&
+      !allowedPriorities.includes(priority)
+    ) {
+      return res.status(400).json({
+        message: "Prioridade inválida.",
+      });
+    }
+
+    const category =
+      await categoriesService.getCategoryById(category_id);
 
     if (!category) {
       return res.status(404).json({
@@ -35,8 +65,8 @@ async function createTicket(req, res) {
     }
 
     const ticket = await ticketsService.createTicket({
-      title,
-      description,
+      title: title.trim(),
+      description: description.trim(),
       category_id,
       priority,
       created_by,
