@@ -35,4 +35,12 @@ router.get(
   managementController.getSupportStatistics
 );
 
+router.get(
+  "/support/:id/tickets",
+  requireAuth,
+  validateIdParam("id"),
+  requireRole("manager"),
+  managementController.getSupportTickets
+);
+
 module.exports = router;
