@@ -98,10 +98,50 @@ async function getSupportTickets(req, res) {
   }
 }
 
+async function getSupportPerformanceMetrics(req, res) {
+  try {
+    const support = await managementService.getSupportSummary(req.params.id);
+
+    if (!support) {
+      return res.status(404).json({
+        message: "Funcionário de suporte não encontrado.",
+      });
+    }
+
+    const performanceMetrics =
+      await managementService.getSupportPerformanceMetrics(req.params.id);
+
+    const timeMetrics =
+      await managementService.getSupportTimeMetrics(req.params.id);
+
+    return res.status(200).json({
+      support: {
+        id: support.id,
+        name: support.name,
+        email: support.email,
+        department: support.department,
+        job_title: support.job_title,
+      },
+
+      metrics: {
+        ...performanceMetrics,
+        ...timeMetrics,
+      },
+    });
+  } catch (error) {
+    console.error(error);
+
+    return res.status(500).json({
+      message: "Erro interno do servidor.",
+    });
+  }
+}
+
 module.exports = {
   getSummary,
   getTicketsByCategory,
   getSupportSummary,
   getSupportStatistics,
   getSupportTickets,
+  getSupportPerformanceMetrics,
 };

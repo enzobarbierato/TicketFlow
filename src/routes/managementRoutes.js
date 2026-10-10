@@ -21,6 +21,14 @@ router.get(
 );
 
 router.get(
+  "/support/:id/metrics",
+  requireAuth,
+  validateIdParam("id"),
+  requireRole("manager"),
+  managementController.getSupportPerformanceMetrics
+);
+
+router.get(
   "/support/:id",
   requireAuth,
   validateIdParam("id"),
