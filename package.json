@@ -20,6 +20,7 @@
   "homepage": "https://github.com/enzobarbierato/TicketFlow#readme",
   "dependencies": {
     "bcrypt": "^6.0.0",
+    "connect-pg-simple": "^10.0.0",
     "dotenv": "^18.0.6",
     "express": "^5.2.1",
     "express-session": "^1.19.0",
