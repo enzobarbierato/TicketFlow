@@ -18,4 +18,11 @@ router.get(
   categoriesController.getActiveCategories
 );
 
+router.patch(
+  "/:id/status",
+  requireAuth,
+  requireRole("manager"),
+  categoriesController.updateCategoryStatus
+);
+
 module.exports = router;

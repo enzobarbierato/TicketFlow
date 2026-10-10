@@ -49,7 +49,45 @@ async function createCategory(req, res) {
   }
 }
 
+async function updateCategoryStatus(req, res) {
+  try {
+    const categoryId = req.params.id;
+    const { active } = req.body;
+
+    if (typeof active !== "boolean") {
+      return res.status(400).json({
+        message: "O campo active deve ser true ou false.",
+      });
+    }
+
+    const category = await categoriesService.updateCategoryStatus(
+      categoryId,
+      active
+    );
+
+    if (!category) {
+      return res.status(404).json({
+        message: "Categoria não encontrada.",
+      });
+    }
+
+    return res.status(200).json({
+      message: active
+        ? "Categoria ativada com sucesso."
+        : "Categoria desativada com sucesso.",
+      category,
+    });
+  } catch (error) {
+    console.error(error);
+
+    return res.status(500).json({
+      message: "Erro interno do servidor.",
+    });
+  }
+}
+
 module.exports = {
   getActiveCategories,
   createCategory,
+  updateCategoryStatus,
 };
