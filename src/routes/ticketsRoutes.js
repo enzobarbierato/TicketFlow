@@ -3,6 +3,7 @@ const ticketsController = require("../controllers/ticketsController");
 const requireAuth = require("../middlewares/requireAuth");
 const requireRole = require("../middlewares/requireRole");
 const validateIdParam = require("../middlewares/validateIdParam");
+const ticketHistoryController = require("../controllers/ticketHistoryController");
 
 const router = express.Router();
 
@@ -55,6 +56,13 @@ router.patch(
   validateIdParam("id"),
   requireRole("manager"),
   ticketsController.assignTicketToUser
+);
+
+router.get(
+  "/:id/history",
+  requireAuth,
+  validateIdParam("id"),
+  ticketHistoryController.getTicketHistory
 );
 
 module.exports = router;

@@ -394,9 +394,19 @@ async function assignTicketToUser(req, res) {
       });
     }
 
+    if (
+      ticket.assigned_to !== null &&
+      String(ticket.assigned_to) === String(userId)
+    ) {
+      return res.status(409).json({
+        message: "Este chamado já está atribuído a este funcionário.",
+      });
+    }
+
     const assignedTicket = await ticketsService.assignTicketToUser(
       ticketId,
-      userId
+      userId,
+      req.session.user.id
     );
 
     return res.status(200).json({
@@ -436,20 +446,27 @@ async function updateTicketPriority(req, res) {
       });
     }
 
-    const ticket = await ticketsService.updateTicketPriority(
+    const result = await ticketsService.updateTicketPriority(
       ticketId,
-      priority
+      priority,
+      req.session.user.id
     );
 
-    if (!ticket) {
+    if (!result) {
       return res.status(404).json({
         message: "Chamado não encontrado.",
       });
     }
 
+    if (result.unchanged) {
+      return res.status(409).json({
+        message: "O chamado já possui esta prioridade.",
+      });
+    }
+
     return res.status(200).json({
       message: "Prioridade do chamado atualizada com sucesso.",
-      ticket,
+      ticket: result.ticket,
     });
   } catch (error) {
     console.error(error);

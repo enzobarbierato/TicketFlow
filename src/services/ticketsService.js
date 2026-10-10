@@ -1,4 +1,5 @@
 const pool = require("../database/connection");
+const ticketHistoryService = require("./ticketHistoryService");
 
 async function createTicket({
   title,
@@ -7,47 +8,73 @@ async function createTicket({
   priority,
   created_by,
 }) {
-  const query = `
-    WITH inserted_ticket AS (
-      INSERT INTO tickets (
+  const client = await pool.connect();
+
+  try {
+    await client.query("BEGIN");
+
+    const ticketPriority = priority || "medium";
+
+    const result = await client.query(
+      `
+        WITH created_ticket AS (
+          INSERT INTO tickets (
+            title,
+            description,
+            category_id,
+            priority,
+            created_by
+          )
+          VALUES ($1, $2, $3, $4, $5)
+          RETURNING *
+        )
+        SELECT
+          t.id,
+          t.title,
+          t.description,
+          t.category_id,
+          c.name AS category_name,
+          t.priority,
+          t.status,
+          t.created_by,
+          t.assigned_to,
+          t.created_on,
+          t.updated_on,
+          t.closed_on
+        FROM created_ticket t
+
+        INNER JOIN categories c
+          ON c.id = t.category_id;
+      `,
+      [
         title,
         description,
         category_id,
-        priority,
-        created_by
-      )
-      VALUES ($1, $2, $3, $4, $5)
-      RETURNING *
-    )
-    SELECT
-      t.id,
-      t.title,
-      t.description,
-      t.category_id,
-      c.name AS category_name,
-      t.priority,
-      t.status,
-      t.created_by,
-      t.assigned_to,
-      t.created_on,
-      t.updated_on,
-      t.closed_on
-    FROM inserted_ticket t
-    INNER JOIN categories c
-      ON c.id = t.category_id;
-  `;
+        ticketPriority,
+        created_by,
+      ]
+    );
 
-  const values = [
-    title,
-    description,
-    category_id,
-    priority || "medium",
-    created_by,
-  ];
+    const ticket = result.rows[0];
 
-  const result = await pool.query(query, values);
+    await ticketHistoryService.createHistoryEvent(
+      {
+        ticketId: ticket.id,
+        performedBy: created_by,
+        eventType: "created",
+      },
+      client
+    );
 
-  return result.rows[0];
+    await client.query("COMMIT");
+
+    return ticket;
+  } catch (error) {
+    await client.query("ROLLBACK");
+    throw error;
+  } finally {
+    client.release();
+  }
 }
 
 async function getTicketsByUserId(userId) {
@@ -276,155 +303,372 @@ async function updateTicketStatus({
   userId,
   userRole,
 }) {
-  let accessCondition = "";
-  let values;
+  const client = await pool.connect();
 
-  if (userRole === "manager") {
-    accessCondition = "id = $2";
-    values = [status, ticketId];
-  } else {
-    accessCondition = `
-      id = $2
-      AND assigned_to = $3
+  try {
+    await client.query("BEGIN");
+
+    let currentTicketQuery;
+    let currentTicketValues;
+
+    if (userRole === "manager") {
+      currentTicketQuery = `
+        SELECT
+          id,
+          status,
+          assigned_to
+        FROM tickets
+        WHERE id = $1
+        FOR UPDATE;
+      `;
+
+      currentTicketValues = [ticketId];
+    } else {
+      currentTicketQuery = `
+        SELECT
+          id,
+          status,
+          assigned_to
+        FROM tickets
+        WHERE id = $1
+          AND assigned_to = $2
+        FOR UPDATE;
+      `;
+
+      currentTicketValues = [ticketId, userId];
+    }
+
+    const currentTicketResult = await client.query(
+      currentTicketQuery,
+      currentTicketValues
+    );
+
+    if (currentTicketResult.rowCount === 0) {
+      await client.query("ROLLBACK");
+      return null;
+    }
+
+    const currentTicket = currentTicketResult.rows[0];
+
+    const updateQuery = `
+      WITH updated_ticket AS (
+        UPDATE tickets
+        SET
+          status = $1::VARCHAR(30),
+          updated_on = NOW(),
+          closed_on = CASE
+            WHEN $1::VARCHAR(30) = 'closed'
+              THEN NOW()
+            ELSE NULL
+          END
+        WHERE id = $2
+        RETURNING *
+      )
+      SELECT
+        t.id,
+        t.title,
+        t.description,
+        t.category_id,
+        c.name AS category_name,
+        t.priority,
+        t.status,
+        t.created_by,
+        t.assigned_to,
+        t.created_on,
+        t.updated_on,
+        t.closed_on
+      FROM updated_ticket t
+      INNER JOIN categories c
+        ON c.id = t.category_id;
     `;
 
-    values = [status, ticketId, userId];
+    const updatedResult = await client.query(updateQuery, [
+      status,
+      ticketId,
+    ]);
+
+    await ticketHistoryService.createHistoryEvent(
+      {
+        ticketId,
+        performedBy: userId,
+        eventType: "status_changed",
+        oldValue: currentTicket.status,
+        newValue: status,
+      },
+      client
+    );
+
+    await client.query("COMMIT");
+
+    return updatedResult.rows[0];
+  } catch (error) {
+    await client.query("ROLLBACK");
+    throw error;
+  } finally {
+    client.release();
   }
-
-  const query = `
-    WITH updated_ticket AS (
-      UPDATE tickets
-      SET
-        status = $1::VARCHAR(30),
-        updated_on = NOW(),
-        closed_on = CASE
-          WHEN $1::VARCHAR(30) = 'closed' THEN NOW()
-          ELSE NULL
-        END
-      WHERE ${accessCondition}
-      RETURNING *
-    )
-    SELECT
-      t.id,
-      t.title,
-      t.description,
-      t.category_id,
-      c.name AS category_name,
-      t.priority,
-      t.status,
-      t.created_by,
-      t.assigned_to,
-      t.created_on,
-      t.updated_on,
-      t.closed_on
-    FROM updated_ticket t
-    INNER JOIN categories c
-      ON c.id = t.category_id;
-  `;
-
-  const result = await pool.query(query, values);
-
-  return result.rows[0] || null;
 }
 
-async function updateTicketPriority(ticketId, priority) {
-  const query = `
-    WITH updated_ticket AS (
-      UPDATE tickets
-      SET
-        priority = $1,
-        updated_on = NOW()
-      WHERE id = $2
-      RETURNING *
-    )
-    SELECT
-      t.id,
-      t.title,
-      t.description,
-      t.category_id,
-      c.name AS category_name,
-      t.priority,
-      t.status,
-      t.created_by,
-      t.assigned_to,
-      t.created_on,
-      t.updated_on,
-      t.closed_on
-    FROM updated_ticket t
-    INNER JOIN categories c
-      ON c.id = t.category_id;
-  `;
+async function updateTicketPriority(ticketId, priority, performedBy) {
+  const client = await pool.connect();
 
-  const result = await pool.query(query, [priority, ticketId]);
+  try {
+    await client.query("BEGIN");
 
-  return result.rows[0] || null;
+    const currentTicketResult = await client.query(
+      `
+        SELECT
+          id,
+          priority
+        FROM tickets
+        WHERE id = $1
+        FOR UPDATE;
+      `,
+      [ticketId]
+    );
+
+    if (currentTicketResult.rowCount === 0) {
+      await client.query("ROLLBACK");
+      return null;
+    }
+
+    const currentTicket = currentTicketResult.rows[0];
+
+    if (currentTicket.priority === priority) {
+      await client.query("ROLLBACK");
+
+      return {
+        unchanged: true,
+        ticket: currentTicket,
+      };
+    }
+
+    const updatedResult = await client.query(
+      `
+        WITH updated_ticket AS (
+          UPDATE tickets
+          SET
+            priority = $1,
+            updated_on = NOW()
+          WHERE id = $2
+          RETURNING *
+        )
+        SELECT
+          t.id,
+          t.title,
+          t.description,
+          t.category_id,
+          c.name AS category_name,
+          t.priority,
+          t.status,
+          t.created_by,
+          t.assigned_to,
+          t.created_on,
+          t.updated_on,
+          t.closed_on
+        FROM updated_ticket t
+        INNER JOIN categories c
+          ON c.id = t.category_id;
+      `,
+      [priority, ticketId]
+    );
+
+    await ticketHistoryService.createHistoryEvent(
+      {
+        ticketId,
+        performedBy,
+        eventType: "priority_changed",
+        oldValue: currentTicket.priority,
+        newValue: priority,
+      },
+      client
+    );
+
+    await client.query("COMMIT");
+
+    return {
+      unchanged: false,
+      ticket: updatedResult.rows[0],
+    };
+  } catch (error) {
+    await client.query("ROLLBACK");
+    throw error;
+  } finally {
+    client.release();
+  }
 }
 
 async function assignTicket(ticketId, userId) {
-  const query = `
-    WITH updated_ticket AS (
-      UPDATE tickets
-      SET
-        assigned_to = $1,
-        updated_on = NOW()
-      WHERE id = $2
-        AND assigned_to IS NULL
-      RETURNING *
-    )
-    SELECT
-      t.id,
-      t.title,
-      t.description,
-      t.category_id,
-      c.name AS category_name,
-      t.priority,
-      t.status,
-      t.created_by,
-      t.assigned_to,
-      t.created_on,
-      t.updated_on,
-      t.closed_on
-    FROM updated_ticket t
-    INNER JOIN categories c
-      ON c.id = t.category_id;
-  `;
+  const client = await pool.connect();
 
-  const result = await pool.query(query, [userId, ticketId]);
+  try {
+    await client.query("BEGIN");
 
-  return result.rows[0] || null;
+    const currentTicketResult = await client.query(
+      `
+        SELECT
+          id,
+          assigned_to
+        FROM tickets
+        WHERE id = $1
+        FOR UPDATE;
+      `,
+      [ticketId]
+    );
+
+    if (currentTicketResult.rowCount === 0) {
+      await client.query("ROLLBACK");
+      return null;
+    }
+
+    const currentTicket = currentTicketResult.rows[0];
+
+    if (currentTicket.assigned_to !== null) {
+      await client.query("ROLLBACK");
+      return null;
+    }
+
+    const updateQuery = `
+      WITH updated_ticket AS (
+        UPDATE tickets
+        SET
+          assigned_to = $1,
+          updated_on = NOW()
+        WHERE id = $2
+          AND assigned_to IS NULL
+        RETURNING *
+      )
+      SELECT
+        t.id,
+        t.title,
+        t.description,
+        t.category_id,
+        c.name AS category_name,
+        t.priority,
+        t.status,
+        t.created_by,
+        t.assigned_to,
+        t.created_on,
+        t.updated_on,
+        t.closed_on
+      FROM updated_ticket t
+      INNER JOIN categories c
+        ON c.id = t.category_id;
+    `;
+
+    const updatedResult = await client.query(updateQuery, [
+      userId,
+      ticketId,
+    ]);
+
+    if (updatedResult.rowCount === 0) {
+      await client.query("ROLLBACK");
+      return null;
+    }
+
+    await ticketHistoryService.createHistoryEvent(
+      {
+        ticketId,
+        performedBy: userId,
+        eventType: "assigned",
+        fromUserId: null,
+        toUserId: userId,
+      },
+      client
+    );
+
+    await client.query("COMMIT");
+
+    return updatedResult.rows[0];
+  } catch (error) {
+    await client.query("ROLLBACK");
+    throw error;
+  } finally {
+    client.release();
+  }
 }
 
-async function assignTicketToUser(ticketId, userId) {
-  const query = `
-    WITH updated_ticket AS (
-      UPDATE tickets
-      SET
-        assigned_to = $1,
-        updated_on = NOW()
-      WHERE id = $2
-      RETURNING *
-    )
-    SELECT
-      t.id,
-      t.title,
-      t.description,
-      t.category_id,
-      c.name AS category_name,
-      t.priority,
-      t.status,
-      t.created_by,
-      t.assigned_to,
-      t.created_on,
-      t.updated_on,
-      t.closed_on
-    FROM updated_ticket t
-    INNER JOIN categories c
-      ON c.id = t.category_id;
-  `;
+async function assignTicketToUser(ticketId, userId, performedBy) {
+  const client = await pool.connect();
 
-  const result = await pool.query(query, [userId, ticketId]);
+  try {
+    await client.query("BEGIN");
 
-  return result.rows[0] || null;
+    const currentTicketResult = await client.query(
+      `
+        SELECT
+          id,
+          assigned_to
+        FROM tickets
+        WHERE id = $1
+        FOR UPDATE;
+      `,
+      [ticketId]
+    );
+
+    if (currentTicketResult.rowCount === 0) {
+      await client.query("ROLLBACK");
+      return null;
+    }
+
+    const currentTicket = currentTicketResult.rows[0];
+
+    const updatedResult = await client.query(
+      `
+        WITH updated_ticket AS (
+          UPDATE tickets
+          SET
+            assigned_to = $1,
+            updated_on = NOW()
+          WHERE id = $2
+          RETURNING *
+        )
+        SELECT
+          t.id,
+          t.title,
+          t.description,
+          t.category_id,
+          c.name AS category_name,
+          t.priority,
+          t.status,
+          t.created_by,
+          t.assigned_to,
+          t.created_on,
+          t.updated_on,
+          t.closed_on
+        FROM updated_ticket t
+
+        INNER JOIN categories c
+          ON c.id = t.category_id;
+      `,
+      [userId, ticketId]
+    );
+
+    const eventType =
+      currentTicket.assigned_to === null
+        ? "assigned"
+        : "reassigned";
+
+    await ticketHistoryService.createHistoryEvent(
+      {
+        ticketId,
+        performedBy,
+        eventType,
+        fromUserId: currentTicket.assigned_to,
+        toUserId: userId,
+      },
+      client
+    );
+
+    await client.query("COMMIT");
+
+    return updatedResult.rows[0];
+  } catch (error) {
+    await client.query("ROLLBACK");
+    throw error;
+  } finally {
+    client.release();
+  }
 }
 
 async function getFilteredTickets({

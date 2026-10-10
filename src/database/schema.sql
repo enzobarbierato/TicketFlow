@@ -95,5 +95,59 @@ CREATE TABLE IF NOT EXISTS user_sessions (
         PRIMARY KEY (sid)
 );
 
+CREATE TABLE IF NOT EXISTS ticket_history (
+    id BIGSERIAL PRIMARY KEY,
+
+    ticket_id BIGINT NOT NULL,
+    performed_by BIGINT NOT NULL,
+
+    event_type VARCHAR(30) NOT NULL,
+
+    from_user_id BIGINT,
+    to_user_id BIGINT,
+
+    old_value VARCHAR(100),
+    new_value VARCHAR(100),
+
+    created_on TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+
+    CONSTRAINT chk_ticket_history_event_type
+        CHECK (
+            event_type IN (
+                'created',
+                'assigned',
+                'reassigned',
+                'status_changed',
+                'priority_changed'
+            )
+        ),
+
+    CONSTRAINT fk_ticket_history_ticket
+        FOREIGN KEY (ticket_id)
+        REFERENCES tickets(id)
+        ON DELETE CASCADE,
+
+    CONSTRAINT fk_ticket_history_performed_by
+        FOREIGN KEY (performed_by)
+        REFERENCES users(id),
+
+    CONSTRAINT fk_ticket_history_from_user
+        FOREIGN KEY (from_user_id)
+        REFERENCES users(id),
+
+    CONSTRAINT fk_ticket_history_to_user
+        FOREIGN KEY (to_user_id)
+        REFERENCES users(id)
+);
+
+CREATE INDEX IF NOT EXISTS idx_ticket_history_ticket
+    ON ticket_history (ticket_id);
+
+CREATE INDEX IF NOT EXISTS idx_ticket_history_performed_by
+    ON ticket_history (performed_by);
+
+CREATE INDEX IF NOT EXISTS idx_ticket_history_created_on
+    ON ticket_history (created_on);
+
 CREATE INDEX IF NOT EXISTS idx_user_sessions_expire
     ON user_sessions (expire);
