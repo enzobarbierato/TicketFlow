@@ -1,5 +1,6 @@
 const ticketsService = require("../services/ticketsService");
 const ticketMessagesService = require("../services/ticketMessagesService");
+const { isNonEmptyString } = require("../utils/validators");
 
 async function createMessage(req, res) {
   try {
@@ -8,9 +9,17 @@ async function createMessage(req, res) {
     const userRole = req.session.user.role;
     const { message } = req.body;
 
-    if (!message) {
+    if (!isNonEmptyString(message)) {
       return res.status(400).json({
         message: "A mensagem é obrigatória.",
+      });
+    }
+
+    const normalizedMessage = message.trim();
+
+    if (normalizedMessage.length > 5000) {
+      return res.status(400).json({
+        message: "A mensagem deve ter no máximo 5000 caracteres.",
       });
     }
 
@@ -26,10 +35,16 @@ async function createMessage(req, res) {
       });
     }
 
+    if (ticket.status === "closed") {
+      return res.status(409).json({
+        message: "Não é possível enviar mensagens em um chamado fechado.",
+      });
+    }
+
     const ticketMessage = await ticketMessagesService.createMessage({
       ticketId,
       userId,
-      message,
+      message: normalizedMessage,
     });
 
     return res.status(201).json({
