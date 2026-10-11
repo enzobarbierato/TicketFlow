@@ -259,6 +259,12 @@ async function assignTicket(req, res, next) {
       });
     }
 
+    if (["resolved", "closed"].includes(ticket.status)) {
+      return res.status(409).json({
+        message: "Não é possível assumir um chamado resolvido ou fechado.",
+      });
+    }
+
     if (ticket.assigned_to) {
       return res.status(409).json({
         message: "Este chamado já possui um responsável.",
@@ -304,6 +310,12 @@ async function assignTicketToUser(req, res, next) {
       });
     }
 
+    if (["resolved", "closed"].includes(ticket.status)) {
+      return res.status(409).json({
+        message: "Não é possível atribuir ou reatribuir um chamado resolvido ou fechado.",
+      });
+    }
+
     const supportUser = await usersService.getUserById(userId);
 
     if (!supportUser) {
@@ -332,6 +344,12 @@ async function assignTicketToUser(req, res, next) {
       userId,
       req.session.user.id
     );
+
+    if (!assignedTicket) {
+      return res.status(409).json({
+        message: "Não foi possível atribuir ou reatribuir este chamado.",
+      });
+    }
 
     return res.status(200).json({
       message: "Chamado atribuído ao suporte com sucesso.",
@@ -377,6 +395,12 @@ async function updateTicketPriority(req, res, next) {
     if (!result) {
       return res.status(404).json({
         message: "Chamado não encontrado.",
+      });
+    }
+    
+    if (result.blocked) {
+      return res.status(409).json({
+        message: "Não é possível alterar a prioridade de um chamado fechado.",
       });
     }
 

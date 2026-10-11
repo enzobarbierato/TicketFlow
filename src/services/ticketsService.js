@@ -311,7 +311,8 @@ async function updateTicketPriority(ticketId, priority, performedBy) {
       `
         SELECT
           id,
-          priority
+          priority,
+          status
         FROM tickets
         WHERE id = $1
         FOR UPDATE;
@@ -326,10 +327,19 @@ async function updateTicketPriority(ticketId, priority, performedBy) {
 
     const currentTicket = currentTicketResult.rows[0];
 
+    if (currentTicket.status === "closed") {
+      await client.query("ROLLBACK");
+
+      return {
+        blocked: true,
+      };
+    }
+
     if (currentTicket.priority === priority) {
       await client.query("ROLLBACK");
 
       return {
+        blocked: false,
         unchanged: true,
         ticket: currentTicket,
       };
@@ -343,6 +353,7 @@ async function updateTicketPriority(ticketId, priority, performedBy) {
             priority = $1,
             updated_on = NOW()
           WHERE id = $2
+            AND status <> 'closed'
           RETURNING *
         )
         SELECT
@@ -365,6 +376,14 @@ async function updateTicketPriority(ticketId, priority, performedBy) {
       [priority, ticketId]
     );
 
+    if (updatedResult.rowCount === 0) {
+      await client.query("ROLLBACK");
+
+      return {
+        blocked: true,
+      };
+    }
+
     await ticketHistoryService.createHistoryEvent(
       {
         ticketId,
@@ -379,6 +398,7 @@ async function updateTicketPriority(ticketId, priority, performedBy) {
     await client.query("COMMIT");
 
     return {
+      blocked: false,
       unchanged: false,
       ticket: updatedResult.rows[0],
     };
@@ -400,6 +420,7 @@ async function assignTicket(ticketId, userId) {
       `
         SELECT
           id,
+          status,
           assigned_to
         FROM tickets
         WHERE id = $1
@@ -415,43 +436,48 @@ async function assignTicket(ticketId, userId) {
 
     const currentTicket = currentTicketResult.rows[0];
 
+    if (["resolved", "closed"].includes(currentTicket.status)) {
+      await client.query("ROLLBACK");
+      return null;
+    }
+
     if (currentTicket.assigned_to !== null) {
       await client.query("ROLLBACK");
       return null;
     }
 
-    const updateQuery = `
-      WITH updated_ticket AS (
-        UPDATE tickets
-        SET
-          assigned_to = $1,
-          updated_on = NOW()
-        WHERE id = $2
-          AND assigned_to IS NULL
-        RETURNING *
-      )
-      SELECT
-        t.id,
-        t.title,
-        t.description,
-        t.category_id,
-        c.name AS category_name,
-        t.priority,
-        t.status,
-        t.created_by,
-        t.assigned_to,
-        t.created_on,
-        t.updated_on,
-        t.closed_on
-      FROM updated_ticket t
-      INNER JOIN categories c
-        ON c.id = t.category_id;
-    `;
+    const updatedResult = await client.query(
+      `
+        WITH updated_ticket AS (
+          UPDATE tickets
+          SET
+            assigned_to = $1,
+            updated_on = NOW()
+          WHERE id = $2
+            AND assigned_to IS NULL
+            AND status NOT IN ('resolved', 'closed')
+          RETURNING *
+        )
+        SELECT
+          t.id,
+          t.title,
+          t.description,
+          t.category_id,
+          c.name AS category_name,
+          t.priority,
+          t.status,
+          t.created_by,
+          t.assigned_to,
+          t.created_on,
+          t.updated_on,
+          t.closed_on
+        FROM updated_ticket t
 
-    const updatedResult = await client.query(updateQuery, [
-      userId,
-      ticketId,
-    ]);
+        INNER JOIN categories c
+          ON c.id = t.category_id;
+      `,
+      [userId, ticketId]
+    );
 
     if (updatedResult.rowCount === 0) {
       await client.query("ROLLBACK");
@@ -490,6 +516,7 @@ async function assignTicketToUser(ticketId, userId, performedBy) {
       `
         SELECT
           id,
+          status,
           assigned_to
         FROM tickets
         WHERE id = $1
@@ -505,6 +532,19 @@ async function assignTicketToUser(ticketId, userId, performedBy) {
 
     const currentTicket = currentTicketResult.rows[0];
 
+    if (["resolved", "closed"].includes(currentTicket.status)) {
+      await client.query("ROLLBACK");
+      return null;
+    }
+
+    if (
+      currentTicket.assigned_to !== null &&
+      String(currentTicket.assigned_to) === String(userId)
+    ) {
+      await client.query("ROLLBACK");
+      return null;
+    }
+
     const updatedResult = await client.query(
       `
         WITH updated_ticket AS (
@@ -513,6 +553,7 @@ async function assignTicketToUser(ticketId, userId, performedBy) {
             assigned_to = $1,
             updated_on = NOW()
           WHERE id = $2
+            AND status NOT IN ('resolved', 'closed')
           RETURNING *
         )
         SELECT
@@ -535,6 +576,11 @@ async function assignTicketToUser(ticketId, userId, performedBy) {
       `,
       [userId, ticketId]
     );
+
+    if (updatedResult.rowCount === 0) {
+      await client.query("ROLLBACK");
+      return null;
+    }
 
     const eventType =
       currentTicket.assigned_to === null
