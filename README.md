@@ -1222,11 +1222,11 @@ Transações PostgreSQL
 [x] Validação de ambiente
 [x] Centralização inicial de constantes
 
-[ ] Tratamento global de erros
-[ ] Limpeza de código não utilizado
-[ ] Revisão final de regras de negócio
-[ ] Revisão de CSRF
-[ ] Revisão final de segurança
+[x] Tratamento global de erros
+[x] Limpeza de código não utilizado
+[x] Revisão final de regras de negócio
+[x] Revisão de CSRF
+[x] Revisão final de segurança
 ```
 
 ## Parte 5 — Testes automatizados
