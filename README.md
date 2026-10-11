@@ -1,214 +1,349 @@
 # TicketFlow
 
-O **TicketFlow** é um sistema web de gerenciamento de chamados desenvolvido para centralizar a abertura, o acompanhamento e a resolução de solicitações de suporte.
+O **TicketFlow** é um sistema web de gerenciamento de chamados desenvolvido para centralizar a abertura, o acompanhamento, a atribuição e a resolução de solicitações de suporte.
 
-O projeto está sendo construído com foco em organização, segurança, controle de acesso, separação de responsabilidades e boas práticas de desenvolvimento de APIs.
+O projeto está sendo desenvolvido com foco em:
 
-## Tecnologias
+- organização de código
+- segurança
+- controle de acesso
+- rastreabilidade
+- integridade dos dados
+- separação de responsabilidades
+- métricas operacionais
+- boas práticas de desenvolvimento de APIs
+
+---
+
+# Tecnologias
+
+Backend:
 
 - Node.js
 - Express
 - PostgreSQL
 - JavaScript
-- HTML e CSS — frontend planejado
+
+Segurança e autenticação:
+
 - bcrypt
 - express-session
 - connect-pg-simple
+- express-rate-limit
+- Helmet
 
-## Objetivo
+Frontend planejado:
 
-O TicketFlow permite que usuários registrem solicitações de suporte e acompanhem seus atendimentos.
+- HTML
+- CSS
+- JavaScript
 
-A aplicação possui diferentes níveis de acesso:
+---
 
-- Usuário comum
-- Suporte de TI
-- Gerência de TI
+# Objetivo
+
+O TicketFlow permite que usuários registrem solicitações de suporte e acompanhem o andamento de seus chamados.
+
+A aplicação possui três perfis:
+
+```text
+user
+support
+manager
+```
 
 Cada perfil possui permissões específicas dentro do sistema.
 
-## Arquitetura
+---
 
-O backend utiliza uma arquitetura baseada em separação de responsabilidades.
+# Arquitetura
+
+O backend utiliza separação entre rotas, controllers, services, middlewares, configurações e acesso ao banco de dados.
 
 ```text
 src/
 ├── config/
+│   ├── env.js
 │   └── session.js
+│
+├── constants/
+│   ├── ticketConstants.js
+│   └── userConstants.js
+│
 ├── controllers/
 │   ├── authController.js
 │   ├── categoriesController.js
 │   ├── dashboardController.js
+│   ├── managementController.js
+│   ├── ticketHistoryController.js
 │   ├── ticketMessagesController.js
 │   ├── ticketsController.js
 │   └── usersController.js
+│
 ├── database/
 │   ├── connection.js
 │   └── schema.sql
+│
 ├── middlewares/
+│   ├── loginRateLimit.js
 │   ├── requireAuth.js
 │   ├── requireRole.js
 │   └── validateIdParam.js
+│
 ├── routes/
 │   ├── authRoutes.js
 │   ├── categoriesRoutes.js
 │   ├── dashboardRoutes.js
+│   ├── managementRoutes.js
 │   ├── ticketMessagesRoutes.js
 │   ├── ticketsRoutes.js
 │   └── usersRoutes.js
+│
 ├── services/
 │   ├── authService.js
 │   ├── categoriesService.js
 │   ├── dashboardService.js
+│   ├── managementService.js
+│   ├── ticketHistoryService.js
 │   ├── ticketMessagesService.js
 │   ├── ticketStatusService.js
 │   ├── ticketsService.js
 │   └── usersService.js
+│
 ├── utils/
 │   └── validators.js
+│
 ├── app.js
 └── server.js
 ```
 
-### Responsabilidades
+## Responsabilidades
 
-- `routes/` — definição dos endpoints da API
-- `controllers/` — tratamento das requisições e respostas HTTP
-- `services/` — regras de negócio e operações no banco
-- `middlewares/` — autenticação, autorização e validações das rotas
-- `database/` — conexão e estrutura do PostgreSQL
-- `config/` — configurações da aplicação
-- `utils/` — funções reutilizáveis de validação
-- `app.js` — configuração do Express
-- `server.js` — inicialização da aplicação
+```text
+routes/
+→ definição dos endpoints
 
-## Perfis de acesso
+controllers/
+→ requisição e resposta HTTP
 
-O TicketFlow utiliza controle de acesso baseado em papéis — RBAC.
+services/
+→ regras de negócio e banco de dados
 
-### `user`
+middlewares/
+→ autenticação, autorização e validações
 
-Usuário comum.
+constants/
+→ valores reutilizáveis do domínio
 
-Pode:
+config/
+→ configuração da aplicação
 
-- Criar chamados
-- Visualizar os próprios chamados
-- Pesquisar e filtrar seus chamados
-- Visualizar mensagens dos próprios chamados
-- Enviar mensagens enquanto o chamado estiver aberto
-- Consultar categorias disponíveis
+database/
+→ conexão e estrutura PostgreSQL
 
-### `support`
+utils/
+→ funções auxiliares e validações
+```
 
-Equipe de suporte de TI.
+---
 
-Pode:
+# Perfis de acesso
 
-- Visualizar chamados ainda sem responsável
-- Visualizar chamados atribuídos a ele
-- Assumir chamados disponíveis
-- Alterar o status dos chamados sob sua responsabilidade
-- Visualizar e enviar mensagens nos chamados acessíveis
-- Consultar o dashboard operacional do suporte
+## User
 
-Um suporte não pode acessar ou alterar chamados atribuídos a outro técnico.
-
-### `manager`
-
-Gerência de TI.
+Usuário comum do sistema.
 
 Pode:
 
-- Visualizar todos os chamados
-- Filtrar e pesquisar todos os chamados
-- Atribuir ou reatribuir chamados para técnicos de suporte
-- Alterar prioridades
-- Alterar status
-- Visualizar técnicos de suporte
-- Criar categorias
-- Renomear categorias
-- Ativar e desativar categorias
+- visualizar os próprios chamados
+- criar chamados
+- consultar categorias disponíveis
+- visualizar mensagens
+- enviar mensagens em chamados permitidos
+- consultar o histórico de chamados aos quais possui acesso
 
-O dashboard operacional é exclusivo do perfil `support`.
+---
 
-## Funcionalidades implementadas
+## Support
 
-### Usuários
+Funcionário responsável pelo atendimento.
 
-- [x] Cadastro de usuários
-- [x] Hash de senha com bcrypt
-- [x] Validação de nome
-- [x] Validação básica de e-mail
-- [x] Validação de senha
-- [x] Validação de departamento
-- [x] Validação de cargo
-- [x] Normalização de campos antes do armazenamento
-- [x] Listagem de técnicos de suporte para gerência
+Pode:
 
-### Autenticação
+- visualizar chamados ainda sem responsável
+- visualizar chamados atribuídos a ele
+- assumir chamados disponíveis
+- alterar o status de chamados sob sua responsabilidade
+- visualizar mensagens
+- enviar mensagens
+- consultar o histórico dos chamados acessíveis
+- acessar o dashboard operacional
 
-- [x] Login
-- [x] Logout
-- [x] Consulta do usuário autenticado
-- [x] Sessões com `express-session`
-- [x] Sessões persistentes no PostgreSQL
-- [x] Cookies `HttpOnly`
-- [x] Middleware de autenticação
-- [x] Controle de acesso por perfil
+Um técnico de suporte não pode alterar chamados atribuídos a outro técnico.
 
-### Chamados
+---
 
-- [x] Abertura de chamados
-- [x] Associação automática ao usuário autenticado
-- [x] Visualização individual
-- [x] Listagem baseada no perfil
-- [x] Atribuição de chamados ao suporte
-- [x] Atribuição e reatribuição pela gerência
-- [x] Alteração de prioridade
-- [x] Alteração de status
-- [x] Fluxo controlado de transição de status
-- [x] Validação de prioridade
-- [x] Validação de categoria
-- [x] Controle de acesso ao chamado
-- [x] Busca textual
-- [x] Filtros
-- [x] Paginação
+## Manager
 
-### Mensagens
+Responsável pela gestão da operação.
 
-- [x] Envio de mensagens
-- [x] Histórico de mensagens
-- [x] Identificação do autor da mensagem
-- [x] Controle de acesso às mensagens
-- [x] Validação de conteúdo
-- [x] Limite de tamanho
-- [x] Bloqueio de novas mensagens em chamados fechados
+Pode:
 
-### Categorias
+- visualizar todos os chamados
+- pesquisar e filtrar chamados
+- alterar status
+- alterar prioridades
+- atribuir chamados
+- reatribuir chamados
+- visualizar técnicos de suporte
+- visualizar métricas da operação
+- visualizar métricas individuais dos técnicos
+- consultar chamados atribuídos a cada técnico
+- gerenciar categorias
+- criar contas de usuário e suporte
 
-- [x] Tabela própria de categorias
-- [x] Associação relacional com chamados
-- [x] Listagem de categorias ativas
-- [x] Criação pela gerência
-- [x] Edição do nome
-- [x] Ativação e desativação
-- [x] Validação de tamanho
-- [x] Unicidade sem diferenciar maiúsculas e minúsculas
+O perfil `manager` não pode ser criado através do endpoint comum de criação de usuários.
 
-### Dashboard
+---
 
-- [x] Dashboard operacional exclusivo para suporte
-- [x] Chamados disponíveis
-- [x] Chamados atribuídos ao técnico
-- [x] Chamados em andamento
-- [x] Chamados aguardando usuário
-- [x] Chamados críticos
-- [x] Chamados resolvidos
+# Usuários
 
-## Fluxo dos chamados
+A criação de usuários é protegida e disponível somente para gerentes.
 
-O TicketFlow utiliza uma máquina de estados para impedir transições incoerentes.
+```http
+POST /api/users
+```
+
+Perfis permitidos:
+
+```text
+user
+support
+```
+
+Não é permitido criar:
+
+```text
+manager
+```
+
+através desse endpoint.
+
+Senhas são armazenadas utilizando hash com bcrypt.
+
+---
+
+# Autenticação
+
+O TicketFlow utiliza autenticação baseada em sessão.
+
+Endpoints:
+
+```http
+POST /api/auth/login
+GET  /api/auth/me
+POST /api/auth/logout
+```
+
+As sessões são persistidas no PostgreSQL através de:
+
+```text
+express-session
++
+connect-pg-simple
+```
+
+Isso permite que sessões continuem válidas mesmo após reinicializações do processo Node.js.
+
+---
+
+# Proteções de autenticação
+
+## Session fixation
+
+Após um login válido, o identificador da sessão é regenerado antes do usuário ser associado à sessão.
+
+Fluxo:
+
+```text
+Credenciais válidas
+        ↓
+Nova sessão
+        ↓
+Usuário associado
+        ↓
+Sessão persistida no PostgreSQL
+```
+
+---
+
+## Rate limiting
+
+O endpoint de login possui proteção contra tentativas repetidas.
+
+Configuração atual:
+
+```text
+10 tentativas falhas
+a cada 15 minutos
+```
+
+Tentativas de login bem-sucedidas não entram na contagem.
+
+---
+
+# Chamados
+
+Os chamados possuem:
+
+```text
+id
+title
+description
+category_id
+priority
+status
+created_by
+assigned_to
+created_on
+updated_on
+closed_on
+```
+
+---
+
+# Prioridades
+
+Prioridades válidas:
+
+```text
+low
+medium
+high
+critical
+```
+
+A alteração de prioridade é restrita à gerência.
+
+---
+
+# Status
+
+Status disponíveis:
+
+```text
+open
+in_progress
+waiting_user
+resolved
+closed
+```
+
+---
+
+# Fluxo de status
+
+O TicketFlow possui controle de transição de estados.
 
 ```text
 open
@@ -246,383 +381,233 @@ closed
 → estado final
 ```
 
-Chamados com status `closed` não podem receber novas mensagens nem voltar para atendimento.
+Chamados fechados não podem receber novas mensagens.
 
-## Prioridades
+---
 
-Os chamados aceitam:
+# Categorias
 
-```text
-low
-medium
-high
-critical
-```
-
-A prioridade pode ser alterada apenas pela gerência.
-
-## Categorias
-
-As categorias são armazenadas separadamente na tabela `categories`.
-
-Exemplo:
+As categorias ficam armazenadas em uma tabela própria.
 
 ```text
 categories
-├── 1 | Acesso
-├── 2 | Hardware e Periféricos
-└── ...
 ```
 
-Os chamados armazenam:
+Um chamado referencia:
 
 ```text
 category_id
 ```
 
-e não o nome diretamente.
+em vez de armazenar diretamente o nome.
 
-Isso permite alterar o nome ou desativar uma categoria sem quebrar chamados antigos.
+Isso permite que categorias sejam renomeadas ou desativadas sem modificar chamados históricos.
 
-Categorias desativadas:
-
-- continuam associadas aos chamados existentes
-- não aparecem na listagem para abertura de novos chamados
-- não podem ser utilizadas em novos chamados
-
-## Banco de dados
-
-O TicketFlow utiliza PostgreSQL.
-
-O banco possui atualmente as seguintes tabelas principais:
-
-### `users`
-
-Armazena usuários.
-
-Principais campos:
+Funcionalidades:
 
 ```text
-id
-name
-email
-password_hash
-department
-job_title
-role
-created_on
-created_by
+listar categorias ativas
+criar categoria
+editar categoria
+ativar categoria
+desativar categoria
 ```
 
-### `categories`
+A unicidade do nome é case-insensitive.
 
-Armazena categorias de chamados.
+Ou seja:
 
 ```text
-id
-name
-active
-created_on
+Acesso
+acesso
+ACESSO
 ```
 
-Os nomes são únicos sem diferenciação entre maiúsculas e minúsculas.
+são consideradas a mesma categoria.
 
-### `tickets`
+---
 
-Armazena os chamados.
+# Mensagens
 
-```text
-id
-title
-description
-category_id
-priority
-status
-created_by
-assigned_to
-created_on
-updated_on
-closed_on
+Chamados possuem histórico de mensagens.
+
+Endpoints:
+
+```http
+GET  /api/tickets/:ticketId/messages
+POST /api/tickets/:ticketId/messages
 ```
 
-### `ticket_messages`
-
-Armazena as interações dos chamados.
+As mensagens possuem:
 
 ```text
-id
 ticket_id
 user_id
 message
 created_on
 ```
 
-### `user_sessions`
-
-Armazena as sessões persistentes.
-
-```text
-sid
-sess
-expire
-```
-
-## Integridade do banco
-
-O PostgreSQL também protege regras importantes.
-
-### Roles válidas
-
-```text
-user
-support
-manager
-```
-
-### Prioridades válidas
-
-```text
-low
-medium
-high
-critical
-```
-
-### Status válidos
-
-```text
-open
-in_progress
-waiting_user
-resolved
-closed
-```
-
-Também existem:
-
-- Foreign keys
-- Índices
-- Constraints `CHECK`
-- Unicidade de e-mail
-- Unicidade case-insensitive de categorias
-- Exclusão em cascata das mensagens quando necessário
-
-## API
-
-### Usuários
-
-Criar usuário:
-
-```http
-POST /api/users
-```
-
-Listar técnicos de suporte:
-
-```http
-GET /api/users/support
-```
-
-Acesso: `manager`
+Chamados com status `closed` continuam disponíveis para consulta, mas não aceitam novas mensagens.
 
 ---
 
-### Autenticação
+# Histórico de movimentações
 
-Login:
+O TicketFlow possui rastreamento das principais alterações de um chamado.
 
-```http
-POST /api/auth/login
+Tabela:
+
+```text
+ticket_history
 ```
 
-Usuário autenticado:
+Eventos registrados:
 
-```http
-GET /api/auth/me
+```text
+created
+assigned
+reassigned
+status_changed
+priority_changed
 ```
 
-Logout:
+Cada evento pode registrar:
 
-```http
-POST /api/auth/logout
+```text
+ticket_id
+performed_by
+event_type
+from_user_id
+to_user_id
+old_value
+new_value
+created_on
 ```
+
+Exemplo:
+
+```text
+Chamado criado
+        ↓
+Atribuído ao suporte
+        ↓
+Status alterado
+        ↓
+Prioridade alterada
+        ↓
+Reatribuído
+        ↓
+Resolvido
+        ↓
+Fechado
+```
+
+As operações importantes utilizam transações PostgreSQL.
+
+Exemplo:
+
+```text
+BEGIN
+   ↓
+alterar chamado
+   ↓
+registrar histórico
+   ↓
+COMMIT
+```
+
+Se alguma operação falhar:
+
+```text
+ROLLBACK
+```
+
+Isso evita que o chamado seja alterado sem o respectivo registro histórico.
 
 ---
 
-### Chamados
-
-Criar chamado:
+# Consulta do histórico
 
 ```http
-POST /api/tickets
+GET /api/tickets/:id/history
 ```
 
-Listar chamados:
+As mesmas regras de acesso do chamado são aplicadas ao histórico.
 
-```http
-GET /api/tickets
-```
+---
 
-Visualizar chamado:
+# Atribuição de chamados
 
-```http
-GET /api/tickets/:id
-```
-
-Alterar status:
-
-```http
-PATCH /api/tickets/:id/status
-```
-
-Acesso:
-
-```text
-support
-manager
-```
-
-O suporte só pode alterar chamados atribuídos a ele.
-
-Alterar prioridade:
-
-```http
-PATCH /api/tickets/:id/priority
-```
-
-Acesso:
-
-```text
-manager
-```
-
-Assumir chamado:
+## Suporte assume chamado
 
 ```http
 PATCH /api/tickets/:id/assign
 ```
 
-Acesso:
+Somente chamados sem responsável podem ser assumidos.
+
+O sistema registra:
 
 ```text
-support
+event_type = assigned
 ```
 
-Atribuir chamado a um técnico:
+---
+
+## Gerência atribui ou reatribui
 
 ```http
 PATCH /api/tickets/:id/assign-user
 ```
 
-Acesso:
+Se o chamado não possui responsável:
 
 ```text
-manager
+assigned
 ```
+
+Se já possui outro responsável:
+
+```text
+reassigned
+```
+
+O sistema registra:
+
+```text
+quem realizou a alteração
+responsável anterior
+novo responsável
+data da alteração
+```
+
+Reatribuir um chamado para o mesmo funcionário é bloqueado.
 
 ---
 
-### Mensagens
+# Busca e filtros
 
-Listar mensagens:
+A listagem de chamados aceita filtros.
 
-```http
-GET /api/tickets/:ticketId/messages
-```
-
-Enviar mensagem:
-
-```http
-POST /api/tickets/:ticketId/messages
-```
-
-Chamados fechados permanecem disponíveis para consulta, mas não aceitam novas mensagens.
-
----
-
-### Categorias
-
-Listar categorias ativas:
-
-```http
-GET /api/categories
-```
-
-Criar categoria:
-
-```http
-POST /api/categories
-```
-
-Acesso:
-
-```text
-manager
-```
-
-Alterar nome:
-
-```http
-PATCH /api/categories/:id
-```
-
-Acesso:
-
-```text
-manager
-```
-
-Ativar ou desativar:
-
-```http
-PATCH /api/categories/:id/status
-```
-
-Acesso:
-
-```text
-manager
-```
-
----
-
-### Dashboard
-
-Dashboard operacional:
-
-```http
-GET /api/dashboard
-```
-
-Acesso exclusivo:
-
-```text
-support
-```
-
-## Filtros e busca
-
-A listagem de chamados aceita filtros opcionais.
-
-### Status
+## Status
 
 ```http
 GET /api/tickets?status=open
 ```
 
-### Prioridade
+## Prioridade
 
 ```http
 GET /api/tickets?priority=critical
 ```
 
-### Categoria
+## Categoria
 
 ```http
 GET /api/tickets?category_id=1
 ```
 
-### Busca textual
+## Pesquisa
 
 ```http
 GET /api/tickets?search=email
@@ -630,40 +615,40 @@ GET /api/tickets?search=email
 
 A busca considera:
 
-- título
-- descrição
-- nome da categoria
+```text
+título
+descrição
+categoria
+```
 
-### Filtros combinados
+Também é possível combinar filtros.
 
 ```http
 GET /api/tickets?status=open&priority=high&category_id=1
 ```
 
-Os filtros sempre respeitam as permissões do usuário autenticado.
+---
 
-## Paginação
-
-A listagem de chamados utiliza paginação.
+# Paginação
 
 ```http
 GET /api/tickets?page=1&limit=10
 ```
 
-Valores padrão:
+Padrões:
 
 ```text
 page = 1
 limit = 10
 ```
 
-O limite máximo permitido é:
+Limite máximo:
 
 ```text
-100 registros por página
+100
 ```
 
-Exemplo de resposta:
+Exemplo:
 
 ```json
 {
@@ -677,34 +662,355 @@ Exemplo de resposta:
 }
 ```
 
-Paginação e filtros podem ser combinados:
+---
 
-```http
-GET /api/tickets?status=open&page=2&limit=10
+# Dashboard do suporte
+
+O dashboard operacional é exclusivo do perfil:
+
+```text
+support
 ```
 
-## Segurança
+Endpoint:
+
+```http
+GET /api/dashboard
+```
+
+Métricas:
+
+```text
+chamados disponíveis
+chamados atribuídos ao técnico
+em andamento
+aguardando usuário
+críticos
+resolvidos
+```
+
+O dashboard não é acessível por `user` nem por `manager`.
+
+---
+
+# Área gerencial
+
+A gerência possui endpoints próprios.
+
+## Resumo geral
+
+```http
+GET /api/management/summary
+```
+
+Exibe:
+
+```text
+total de chamados
+abertos
+em andamento
+aguardando usuário
+resolvidos
+fechados
+sem responsável
+críticos
+quantidade de técnicos
+```
+
+---
+
+## Estatísticas por categoria
+
+```http
+GET /api/management/categories
+```
+
+Exibe quantidade de chamados por:
+
+```text
+categoria
+status
+```
+
+---
+
+# Estatísticas por funcionário
+
+## Comparação entre técnicos
+
+```http
+GET /api/management/support
+```
+
+Exibe:
+
+```text
+total
+ativos
+abertos
+em andamento
+aguardando usuário
+resolvidos
+fechados
+críticos
+```
+
+---
+
+## Resumo individual
+
+```http
+GET /api/management/support/:id
+```
+
+Retorna informações e indicadores do funcionário.
+
+---
+
+## Chamados do funcionário
+
+```http
+GET /api/management/support/:id/tickets
+```
+
+Retorna os chamados atualmente atribuídos ao técnico.
+
+---
+
+## Métricas históricas
+
+```http
+GET /api/management/support/:id/metrics
+```
+
+Métricas disponíveis:
+
+```text
+tickets_received
+direct_assignments
+reassigned_to
+reassigned_from
+status_changes
+resolved_by_support
+closed_by_support
+avg_seconds_to_assign
+avg_seconds_to_resolve
+```
+
+---
+
+# Métricas de tempo
+
+## Tempo médio para assumir
+
+Representa o tempo entre:
+
+```text
+created
+→
+assigned
+```
+
+quando o próprio técnico assume o chamado.
+
+---
+
+## Tempo médio de resolução
+
+Representa o tempo entre:
+
+```text
+assigned/reassigned
+→
+resolved
+```
+
+para o técnico responsável.
+
+Os valores são retornados em segundos.
+
+Exemplo:
+
+```json
+{
+  "avg_seconds_to_assign": 420,
+  "avg_seconds_to_resolve": 5400
+}
+```
+
+O frontend futuramente poderá apresentar:
+
+```text
+420 segundos
+→ 7 minutos
+
+5400 segundos
+→ 1 hora e 30 minutos
+```
+
+Se não houver dados históricos suficientes:
+
+```json
+null
+```
+
+é retornado.
+
+As métricas históricas são válidas a partir da implantação do `ticket_history`.
+
+---
+
+# Banco de dados
+
+Tabelas atuais:
+
+```text
+users
+categories
+tickets
+ticket_messages
+ticket_history
+user_sessions
+```
+
+---
+
+# Integridade do banco
+
+O PostgreSQL possui regras próprias para impedir estados inválidos.
+
+Entre elas:
+
+```text
+foreign keys
+constraints CHECK
+índices
+unicidade
+integridade referencial
+```
+
+Roles válidas:
+
+```text
+user
+support
+manager
+```
+
+Prioridades válidas:
+
+```text
+low
+medium
+high
+critical
+```
+
+Status válidos:
+
+```text
+open
+in_progress
+waiting_user
+resolved
+closed
+```
+
+---
+
+# Segurança
 
 Medidas já implementadas:
 
-- Hash de senhas com bcrypt
-- Senhas nunca retornadas pela API
-- Variáveis sensíveis armazenadas no `.env`
-- `.env` ignorado pelo Git
-- Cookies `HttpOnly`
-- Sessões persistentes no PostgreSQL
-- Middleware de autenticação
-- RBAC
-- Autorização por propriedade e atribuição
-- Queries parametrizadas
-- Validação de IDs
-- Validação de entradas
-- Validação de transição de status
-- Constraints no PostgreSQL
-- Proteção contra categorias duplicadas
-- Limitação de acesso entre técnicos de suporte
+```text
+bcrypt para senhas
+queries parametrizadas
+variáveis sensíveis em .env
+.env ignorado pelo Git
+sessões persistentes
+cookies HttpOnly
+sameSite=Lax
+cookie Secure em produção
+session regeneration após login
+rate limiting no login
+Helmet
+remoção do X-Powered-By
+trust proxy em produção
+controle de acesso por perfil
+controle de acesso por chamado
+validação de IDs
+validação de entradas
+constraints no PostgreSQL
+transações nas alterações críticas
+```
 
-## Validações
+---
+
+# Headers de segurança
+
+O projeto utiliza Helmet.
+
+Entre os headers enviados estão:
+
+```text
+Cross-Origin-Opener-Policy
+Cross-Origin-Resource-Policy
+Referrer-Policy
+Strict-Transport-Security
+X-Content-Type-Options
+X-Frame-Options
+X-DNS-Prefetch-Control
+```
+
+O header:
+
+```text
+X-Powered-By
+```
+
+é desabilitado.
+
+A Content Security Policy será configurada quando o frontend for desenvolvido.
+
+---
+
+# Variáveis de ambiente
+
+A aplicação valida as configurações obrigatórias antes da inicialização.
+
+Variáveis:
+
+```env
+PORT=3000
+NODE_ENV=development
+
+SESSION_SECRET=
+
+DB_HOST=localhost
+DB_PORT=5432
+DB_NAME=ticketflow
+DB_USER=
+DB_PASSWORD=
+```
+
+São validados:
+
+```text
+SESSION_SECRET
+DB_HOST
+DB_PORT
+DB_NAME
+DB_USER
+DB_PASSWORD
+NODE_ENV
+PORT
+```
+
+Se uma configuração obrigatória estiver incorreta, a aplicação não inicia.
+
+---
+
+# Validações
 
 A aplicação possui validadores reutilizáveis em:
 
@@ -712,44 +1018,60 @@ A aplicação possui validadores reutilizáveis em:
 src/utils/validators.js
 ```
 
-Entre as validações existentes:
+Validações atuais incluem:
 
-- Strings vazias
-- Strings contendo somente espaços
-- E-mail
-- Senhas
-- IDs positivos
-- Prioridades
-- Status
-- Categorias
-- Paginação
-- Limites de tamanho
+```text
+strings vazias
+e-mail
+senha
+IDs positivos
+status
+prioridade
+categoria
+paginação
+limites de tamanho
+```
 
-IDs inválidos como:
+Exemplos de IDs inválidos:
 
 ```text
 /api/tickets/abc
 /api/tickets/-1
-/api/categories/banana
+/api/categories/teste
 ```
 
 são recusados antes de chegar ao PostgreSQL.
 
-## Sessões
+---
 
-As sessões utilizam:
+# Constantes
+
+Valores reutilizáveis do domínio estão sendo centralizados em:
 
 ```text
-express-session
-+
-connect-pg-simple
-+
-PostgreSQL
+src/constants/
 ```
 
-Isso significa que o usuário permanece autenticado mesmo que o processo Node.js seja reiniciado, desde que a sessão ainda seja válida.
+Arquivos:
 
-## Executando o projeto
+```text
+ticketConstants.js
+userConstants.js
+```
+
+Isso evita duplicação de listas de:
+
+```text
+status
+prioridades
+roles
+```
+
+em diferentes partes da aplicação.
+
+---
+
+# Executando o projeto
 
 Clone:
 
@@ -757,7 +1079,7 @@ Clone:
 git clone https://github.com/enzobarbierato/TicketFlow.git
 ```
 
-Entre no diretório:
+Entre no projeto:
 
 ```bash
 cd TicketFlow
@@ -775,24 +1097,10 @@ Crie:
 .env
 ```
 
-baseado em:
+com base em:
 
 ```text
 .env.example
-```
-
-Exemplo:
-
-```env
-PORT=3000
-NODE_ENV=development
-SESSION_SECRET=sua_chave_de_sessao
-
-DB_HOST=localhost
-DB_PORT=5432
-DB_NAME=ticketflow
-DB_USER=admflow
-DB_PASSWORD=sua_senha
 ```
 
 Crie a estrutura do banco:
@@ -813,13 +1121,15 @@ Ou:
 npm start
 ```
 
-A aplicação será disponibilizada em:
+Servidor padrão:
 
 ```text
 http://localhost:3000
 ```
 
-## Scripts
+---
+
+# Scripts
 
 ```text
 npm start
@@ -829,44 +1139,129 @@ npm run dev
 → node --watch src/server.js
 ```
 
-## Status do projeto
+---
 
-🚧 **Em desenvolvimento**
+# Status atual
 
-O backend principal já possui:
+O backend já possui:
 
-- Autenticação
-- Sessões persistentes
-- RBAC
-- Usuários
-- Chamados
-- Mensagens
-- Categorias
-- Atribuição
-- Prioridades
-- Máquina de estados
-- Busca
-- Filtros
-- Paginação
-- Dashboard operacional de suporte
-- Validações
-- Proteções de banco e API
+```text
+Autenticação
+Sessões persistentes
+RBAC
+Usuários
+Chamados
+Mensagens
+Categorias
+Atribuição
+Reatribuição
+Prioridades
+Máquina de estados
+Histórico de movimentações
+Busca
+Filtros
+Paginação
+Dashboard operacional
+Área gerencial
+Métricas por funcionário
+Métricas históricas
+Métricas de tempo
+Rate limiting
+Headers de segurança
+Validação de ambiente
+Transações PostgreSQL
+```
 
-## Próximas etapas
+---
 
-- [ ] Área gerencial e relatórios
-- [ ] Revisão final de consistência da API
-- [ ] Testes automatizados
-- [ ] Frontend
-- [ ] Login visual
-- [ ] Área do usuário
-- [ ] Dashboard do suporte
-- [ ] Área gerencial
-- [ ] Interface de gerenciamento de categorias
-- [ ] Responsividade
-- [ ] Preparação para deploy
-- [ ] Documentação final da API
+# Roadmap
 
-## Autor
+## Parte 1 — Área gerencial
+
+```text
+[x] Resumo geral
+[x] Estatísticas por categoria
+[x] Comparação entre funcionários
+[x] Detalhamento individual
+[x] Chamados por funcionário
+```
+
+## Parte 2 — Histórico
+
+```text
+[x] Criação do chamado
+[x] Atribuição
+[x] Reatribuição
+[x] Mudança de status
+[x] Mudança de prioridade
+[x] Consulta pela API
+```
+
+## Parte 3 — Métricas
+
+```text
+[x] Chamados recebidos
+[x] Atribuições
+[x] Reatribuições
+[x] Chamados resolvidos
+[x] Chamados fechados
+[x] Tempo médio para assumir
+[x] Tempo médio de resolução
+```
+
+## Parte 4 — Backend e segurança
+
+```text
+[x] Remover cadastro público
+[x] Controle de criação de perfis
+[x] Rate limiting no login
+[x] Helmet
+[x] Remover X-Powered-By
+[x] Proteção contra session fixation
+[x] Trust proxy para produção
+[x] Validação de ambiente
+[x] Centralização inicial de constantes
+
+[ ] Tratamento global de erros
+[ ] Limpeza de código não utilizado
+[ ] Revisão final de regras de negócio
+[ ] Revisão de CSRF
+[ ] Revisão final de segurança
+```
+
+## Parte 5 — Testes automatizados
+
+```text
+[ ] Configurar ambiente de testes
+[ ] Autenticação
+[ ] Usuários
+[ ] Chamados
+[ ] Permissões
+[ ] Categorias
+[ ] Mensagens
+[ ] Histórico
+[ ] Dashboard
+[ ] Área gerencial
+```
+
+## Parte 6 — Frontend
+
+```text
+[ ] Login
+[ ] Área do usuário
+[ ] Criação de chamados
+[ ] Visualização de chamados
+[ ] Histórico do chamado
+[ ] Dashboard do suporte
+[ ] Painel gerencial
+[ ] Visualização por funcionário
+[ ] Gerenciamento de categorias
+[ ] Responsividade
+[ ] Content Security Policy
+```
+
+---
+
+# Autor
 
 Desenvolvido por **Enzo Barbierato**.
