@@ -3,6 +3,7 @@ const usersService = require("../services/usersService");
 const categoriesService = require("../services/categoriesService");
 const ticketStatusService = require("../services/ticketStatusService");
 const {isNonEmptyString,isPositiveInteger,} = require("../utils/validators");
+const {TICKET_STATUSES,TICKET_PRIORITIES,} = require("../constants/ticketConstants");
 
 async function createTicket(req, res) {
   try {
@@ -14,13 +15,6 @@ async function createTicket(req, res) {
     } = req.body;
 
     const created_by = req.session.user.id;
-
-    const allowedPriorities = [
-      "low",
-      "medium",
-      "high",
-      "critical",
-    ];
 
     if (!isNonEmptyString(title)) {
       return res.status(400).json({
@@ -42,7 +36,7 @@ async function createTicket(req, res) {
 
     if (
       priority &&
-      !allowedPriorities.includes(priority)
+      !TICKET_PRIORITIES.includes(priority)
     ) {
       return res.status(400).json({
         message: "Prioridade inválida.",
@@ -126,28 +120,13 @@ async function getTickets(req, res) {
       limit = "10",
     } = req.query;
 
-    const allowedStatuses = [
-      "open",
-      "in_progress",
-      "waiting_user",
-      "resolved",
-      "closed",
-    ];
-
-    const allowedPriorities = [
-      "low",
-      "medium",
-      "high",
-      "critical",
-    ];
-
-    if (status && !allowedStatuses.includes(status)) {
+    if (status && !TICKET_STATUSES.includes(status)) {
       return res.status(400).json({
         message: "Filtro de status inválido.",
       });
     }
-
-    if (priority && !allowedPriorities.includes(priority)) {
+    
+    if (priority && !TICKET_PRIORITIES.includes(priority)) {
       return res.status(400).json({
         message: "Filtro de prioridade inválido.",
       });
@@ -219,21 +198,13 @@ async function updateTicketStatus(req, res) {
     const userRole = req.session.user.role;
     const { status } = req.body;
 
-    const allowedStatuses = [
-      "open",
-      "in_progress",
-      "waiting_user",
-      "resolved",
-      "closed",
-    ];
-
     if (!status) {
       return res.status(400).json({
         message: "O status é obrigatório.",
       });
     }
 
-    if (!allowedStatuses.includes(status)) {
+    if (!TICKET_STATUSES.includes(status)) {
       return res.status(400).json({
         message: "Status inválido.",
       });
@@ -427,12 +398,11 @@ async function updateTicketPriority(req, res) {
     const ticketId = req.params.id;
     const { priority } = req.body;
 
-    const allowedPriorities = [
-      "low",
-      "medium",
-      "high",
-      "critical",
-    ];
+    if (!TICKET_PRIORITIES.includes(priority)) {
+      return res.status(400).json({
+        message: "Prioridade inválida.",
+      });
+    }
 
     if (!priority) {
       return res.status(400).json({
@@ -440,7 +410,10 @@ async function updateTicketPriority(req, res) {
       });
     }
 
-    if (!allowedPriorities.includes(priority)) {
+    if (
+      priority &&
+      !TICKET_PRIORITIES.includes(priority)
+    ) {
       return res.status(400).json({
         message: "Prioridade inválida.",
       });

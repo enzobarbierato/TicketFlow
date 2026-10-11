@@ -1,5 +1,6 @@
 const usersService = require("../services/usersService");
 const {isNonEmptyString,isValidEmail,isValidPassword,} = require("../utils/validators");
+const {CREATABLE_USER_ROLES,} = require("../constants/userConstants");
 
 async function createUser(req, res) {
   try {
@@ -66,12 +67,7 @@ async function createUser(req, res) {
       });
     }
 
-    const allowedRoles = [
-      "user",
-      "support",
-    ];
-
-    if (!allowedRoles.includes(role)) {
+    if (!CREATABLE_USER_ROLES.includes(role)) {
       return res.status(400).json({
         message: "Perfil de usuário inválido.",
       });
