@@ -1,6 +1,6 @@
 const dashboardService = require("../services/dashboardService");
 
-async function getDashboard(req, res) {
+async function getDashboard(req, res, next) {
   try {
     const userId = req.session.user.id;
 
@@ -10,11 +10,7 @@ async function getDashboard(req, res) {
       dashboard,
     });
   } catch (error) {
-    console.error(error);
-
-    return res.status(500).json({
-      message: "Erro interno do servidor.",
-    });
+    next(error);
   }
 }
 

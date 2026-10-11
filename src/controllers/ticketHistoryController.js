@@ -1,7 +1,7 @@
 const ticketsService = require("../services/ticketsService");
 const ticketHistoryService = require("../services/ticketHistoryService");
 
-async function getTicketHistory(req, res) {
+async function getTicketHistory(req, res, next) {
   try {
     const ticketId = req.params.id;
     const userId = req.session.user.id;
@@ -30,11 +30,7 @@ async function getTicketHistory(req, res) {
       history,
     });
   } catch (error) {
-    console.error(error);
-
-    return res.status(500).json({
-      message: "Erro interno do servidor.",
-    });
+    next(error);
   }
 }
 

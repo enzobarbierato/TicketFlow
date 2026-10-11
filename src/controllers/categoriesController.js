@@ -1,11 +1,7 @@
 const categoriesService = require("../services/categoriesService");
+const { isNonEmptyString } = require("../utils/validators");
 
-const {
-  isNonEmptyString,
-} = require("../utils/validators");
-
-
-async function getActiveCategories(req, res) {
+async function getActiveCategories(req, res, next) {
   try {
     const categories = await categoriesService.getActiveCategories();
 
@@ -13,16 +9,11 @@ async function getActiveCategories(req, res) {
       categories,
     });
   } catch (error) {
-    console.error(error);
-
-    return res.status(500).json({
-      message: "Erro interno do servidor.",
-    });
+    next(error);
   }
 }
 
-
-async function createCategory(req, res) {
+async function createCategory(req, res, next) {
   try {
     const { name } = req.body;
 
@@ -40,9 +31,7 @@ async function createCategory(req, res) {
       });
     }
 
-    const category = await categoriesService.createCategory(
-      normalizedName
-    );
+    const category = await categoriesService.createCategory(normalizedName);
 
     return res.status(201).json({
       message: "Categoria criada com sucesso.",
@@ -55,23 +44,18 @@ async function createCategory(req, res) {
       });
     }
 
-    console.error(error);
-
-    return res.status(500).json({
-      message: "Erro interno do servidor.",
-    });
+    next(error);
   }
 }
 
-
-async function updateCategoryStatus(req, res) {
+async function updateCategoryStatus(req, res, next) {
   try {
     const categoryId = req.params.id;
     const { active } = req.body;
 
     if (typeof active !== "boolean") {
       return res.status(400).json({
-        message: "O campo active deve ser true ou false.",
+        message: "O campo active deve ser booleano.",
       });
     }
 
@@ -93,16 +77,11 @@ async function updateCategoryStatus(req, res) {
       category,
     });
   } catch (error) {
-    console.error(error);
-
-    return res.status(500).json({
-      message: "Erro interno do servidor.",
-    });
+    next(error);
   }
 }
 
-
-async function updateCategoryName(req, res) {
+async function updateCategoryName(req, res, next) {
   try {
     const categoryId = req.params.id;
     const { name } = req.body;
@@ -143,14 +122,9 @@ async function updateCategoryName(req, res) {
       });
     }
 
-    console.error(error);
-
-    return res.status(500).json({
-      message: "Erro interno do servidor.",
-    });
+    next(error);
   }
 }
-
 
 module.exports = {
   getActiveCategories,

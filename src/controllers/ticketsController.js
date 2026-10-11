@@ -5,7 +5,7 @@ const ticketStatusService = require("../services/ticketStatusService");
 const {isNonEmptyString,isPositiveInteger,} = require("../utils/validators");
 const {TICKET_STATUSES,TICKET_PRIORITIES,} = require("../constants/ticketConstants");
 
-async function createTicket(req, res) {
+async function createTicket(req, res, next) {
   try {
     const {
       title,
@@ -71,42 +71,11 @@ async function createTicket(req, res) {
       ticket,
     });
   } catch (error) {
-    console.error(error);
-
-    return res.status(500).json({
-      message: "Erro interno do servidor.",
-    });
+      return next(error);
   }
 }
 
-async function getTickets(req, res) {
-  try {
-    const userId = req.session.user.id;
-    const userRole = req.session.user.role;
-
-    let tickets;
-
-    if (userRole === "manager") {
-      tickets = await ticketsService.getAllTickets();
-    } else if (userRole === "support") {
-      tickets = await ticketsService.getTicketsForSupport(userId);
-    } else {
-      tickets = await ticketsService.getTicketsByUserId(userId);
-    }
-
-    return res.status(200).json({
-      tickets,
-    });
-  } catch (error) {
-    console.error(error);
-
-    return res.status(500).json({
-      message: "Erro interno do servidor.",
-    });
-  }
-}
-
-async function getTickets(req, res) {
+async function getTickets(req, res, next) {
   try {
     const userId = req.session.user.id;
     const userRole = req.session.user.role;
@@ -183,15 +152,11 @@ async function getTickets(req, res) {
       },
     });
   } catch (error) {
-    console.error(error);
-
-    return res.status(500).json({
-      message: "Erro interno do servidor.",
-    });
+      return next(error);
   }
 }
 
-async function updateTicketStatus(req, res) {
+async function updateTicketStatus(req, res, next) {
   try {
     const ticketId = req.params.id;
     const userId = req.session.user.id;
@@ -251,15 +216,11 @@ async function updateTicketStatus(req, res) {
       ticket,
     });
   } catch (error) {
-    console.error(error);
-
-    return res.status(500).json({
-      message: "Erro interno do servidor.",
-    });
+      return next(error);
   }
 }
 
-async function getTicketById(req, res) {
+async function getTicketById(req, res, next) {
   try {
     const ticketId = req.params.id;
     const userId = req.session.user.id;
@@ -281,15 +242,11 @@ async function getTicketById(req, res) {
       ticket,
     });
   } catch (error) {
-    console.error(error);
-
-    return res.status(500).json({
-      message: "Erro interno do servidor.",
-    });
+      return next(error);
   }
 }
 
-async function assignTicket(req, res) {
+async function assignTicket(req, res, next) {
   try {
     const ticketId = req.params.id;
     const userId = req.session.user.id;
@@ -324,15 +281,11 @@ async function assignTicket(req, res) {
       ticket: assignedTicket,
     });
   } catch (error) {
-    console.error(error);
-
-    return res.status(500).json({
-      message: "Erro interno do servidor.",
-    });
+      return next(error);
   }
 }
 
-async function assignTicketToUser(req, res) {
+async function assignTicketToUser(req, res, next) {
   try {
     const ticketId = req.params.id;
     const { userId } = req.body;
@@ -385,15 +338,11 @@ async function assignTicketToUser(req, res) {
       ticket: assignedTicket,
     });
   } catch (error) {
-    console.error(error);
-
-    return res.status(500).json({
-      message: "Erro interno do servidor.",
-    });
-  }
+  return next(error);
+}
 }
 
-async function updateTicketPriority(req, res) {
+async function updateTicketPriority(req, res, next) {
   try {
     const ticketId = req.params.id;
     const { priority } = req.body;
@@ -442,12 +391,8 @@ async function updateTicketPriority(req, res) {
       ticket: result.ticket,
     });
   } catch (error) {
-    console.error(error);
-
-    return res.status(500).json({
-      message: "Erro interno do servidor.",
-    });
-  }
+  return next(error);
+}
 }
 
 module.exports = {

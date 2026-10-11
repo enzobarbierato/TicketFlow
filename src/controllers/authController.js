@@ -1,5 +1,9 @@
 const authService = require("../services/authService");
-const {isNonEmptyString,isValidEmail,} = require("../utils/validators");
+
+const {
+  isNonEmptyString,
+  isValidEmail,
+} = require("../utils/validators");
 
 function regenerateSession(req) {
   return new Promise((resolve, reject) => {
@@ -25,7 +29,7 @@ function saveSession(req) {
   });
 }
 
-async function login(req, res) {
+async function login(req, res, next) {
   try {
     const { email, password } = req.body;
 
@@ -72,11 +76,7 @@ async function login(req, res) {
       user: req.session.user,
     });
   } catch (error) {
-    console.error(error);
-
-    return res.status(500).json({
-      message: "Erro interno do servidor.",
-    });
+    next(error);
   }
 }
 
@@ -86,14 +86,10 @@ function getCurrentUser(req, res) {
   });
 }
 
-function logout(req, res) {
+function logout(req, res, next) {
   req.session.destroy((error) => {
     if (error) {
-      console.error(error);
-
-      return res.status(500).json({
-        message: "Erro ao encerrar sessão.",
-      });
+      return next(error);
     }
 
     res.clearCookie("ticketflow.sid");

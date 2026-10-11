@@ -10,6 +10,8 @@ const ticketMessagesRoutes = require("./routes/ticketMessagesRoutes");
 const categoriesRoutes = require("./routes/categoriesRoutes");
 const dashboardRoutes = require("./routes/dashboardRoutes");
 const managementRoutes = require("./routes/managementRoutes");
+const notFound = require("./middlewares/notFound");
+const errorHandler = require("./middlewares/errorHandler");
 
 const app = express();
 
@@ -43,5 +45,8 @@ app.use("/api/tickets", ticketMessagesRoutes);
 app.use("/api/categories", categoriesRoutes);
 app.use("/api/dashboard", dashboardRoutes);
 app.use("/api/management", managementRoutes);
+
+app.use(notFound);
+app.use(errorHandler);
 
 module.exports = app;

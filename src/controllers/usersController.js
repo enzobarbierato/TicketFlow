@@ -1,8 +1,16 @@
 const usersService = require("../services/usersService");
-const {isNonEmptyString,isValidEmail,isValidPassword,} = require("../utils/validators");
-const {CREATABLE_USER_ROLES,} = require("../constants/userConstants");
 
-async function createUser(req, res) {
+const {
+  isNonEmptyString,
+  isValidEmail,
+  isValidPassword,
+} = require("../utils/validators");
+
+const {
+  CREATABLE_USER_ROLES,
+} = require("../constants/userConstants");
+
+async function createUser(req, res, next) {
   try {
     const {
       name,
@@ -93,15 +101,11 @@ async function createUser(req, res) {
       });
     }
 
-    console.error(error);
-
-    return res.status(500).json({
-      message: "Erro interno do servidor.",
-    });
+    next(error);
   }
 }
 
-async function getSupportUsers(req, res) {
+async function getSupportUsers(req, res, next) {
   try {
     const supportUsers = await usersService.getSupportUsers();
 
@@ -109,11 +113,7 @@ async function getSupportUsers(req, res) {
       users: supportUsers,
     });
   } catch (error) {
-    console.error(error);
-
-    return res.status(500).json({
-      message: "Erro interno do servidor.",
-    });
+    next(error);
   }
 }
 

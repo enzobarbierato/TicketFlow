@@ -77,60 +77,6 @@ async function createTicket({
   }
 }
 
-async function getTicketsByUserId(userId) {
-  const query = `
-    SELECT
-      t.id,
-      t.title,
-      t.description,
-      t.category_id,
-      c.name AS category_name,
-      t.priority,
-      t.status,
-      t.created_by,
-      t.assigned_to,
-      t.created_on,
-      t.updated_on,
-      t.closed_on
-    FROM tickets t
-    INNER JOIN categories c
-      ON c.id = t.category_id
-    WHERE t.created_by = $1
-    ORDER BY t.created_on DESC;
-  `;
-
-  const result = await pool.query(query, [userId]);
-
-  return result.rows;
-}
-
-async function getTicketByIdAndUserId(ticketId, userId) {
-  const query = `
-    SELECT
-      t.id,
-      t.title,
-      t.description,
-      t.category_id,
-      c.name AS category_name,
-      t.priority,
-      t.status,
-      t.created_by,
-      t.assigned_to,
-      t.created_on,
-      t.updated_on,
-      t.closed_on
-    FROM tickets t
-    INNER JOIN categories c
-      ON c.id = t.category_id
-    WHERE t.id = $1
-      AND t.created_by = $2;
-  `;
-
-  const result = await pool.query(query, [ticketId, userId]);
-
-  return result.rows[0] || null;
-}
-
 async function getTicketById(ticketId) {
   const query = `
     SELECT
@@ -155,60 +101,6 @@ async function getTicketById(ticketId) {
   const result = await pool.query(query, [ticketId]);
 
   return result.rows[0] || null;
-}
-
-async function getTicketsForSupport(userId) {
-  const query = `
-    SELECT
-      t.id,
-      t.title,
-      t.description,
-      t.category_id,
-      c.name AS category_name,
-      t.priority,
-      t.status,
-      t.created_by,
-      t.assigned_to,
-      t.created_on,
-      t.updated_on,
-      t.closed_on
-    FROM tickets t
-    INNER JOIN categories c
-      ON c.id = t.category_id
-    WHERE t.assigned_to IS NULL
-       OR t.assigned_to = $1
-    ORDER BY t.created_on DESC;
-  `;
-
-  const result = await pool.query(query, [userId]);
-
-  return result.rows;
-}
-
-async function getAllTickets() {
-  const query = `
-    SELECT
-      t.id,
-      t.title,
-      t.description,
-      t.category_id,
-      c.name AS category_name,
-      t.priority,
-      t.status,
-      t.created_by,
-      t.assigned_to,
-      t.created_on,
-      t.updated_on,
-      t.closed_on
-    FROM tickets t
-    INNER JOIN categories c
-      ON c.id = t.category_id
-    ORDER BY t.created_on DESC;
-  `;
-
-  const result = await pool.query(query);
-
-  return result.rows;
 }
 
 async function getAccessibleTicketById({
@@ -792,11 +684,7 @@ async function getFilteredTickets({
 
 module.exports = {
   createTicket,
-  getTicketsByUserId,
-  getTicketByIdAndUserId,
   getTicketById,
-  getTicketsForSupport,
-  getAllTickets,
   getAccessibleTicketById,
   getFilteredTickets,
   updateTicketStatus,

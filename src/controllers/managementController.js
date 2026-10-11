@@ -1,6 +1,6 @@
 const managementService = require("../services/managementService");
 
-async function getSummary(req, res) {
+async function getSummary(req, res, next) {
   try {
     const summary = await managementService.getManagementSummary();
 
@@ -8,15 +8,11 @@ async function getSummary(req, res) {
       summary,
     });
   } catch (error) {
-    console.error(error);
-
-    return res.status(500).json({
-      message: "Erro interno do servidor.",
-    });
+    next(error);
   }
 }
 
-async function getTicketsByCategory(req, res) {
+async function getTicketsByCategory(req, res, next) {
   try {
     const categories = await managementService.getTicketsByCategory();
 
@@ -24,15 +20,11 @@ async function getTicketsByCategory(req, res) {
       categories,
     });
   } catch (error) {
-    console.error(error);
-
-    return res.status(500).json({
-      message: "Erro interno do servidor.",
-    });
+    next(error);
   }
 }
 
-async function getSupportSummary(req, res) {
+async function getSupportSummary(req, res, next) {
   try {
     const support = await managementService.getSupportSummary(req.params.id);
 
@@ -46,15 +38,11 @@ async function getSupportSummary(req, res) {
       support,
     });
   } catch (error) {
-    console.error(error);
-
-    return res.status(500).json({
-      message: "Erro interno do servidor.",
-    });
+    next(error);
   }
 }
 
-async function getSupportStatistics(req, res) {
+async function getSupportStatistics(req, res, next) {
   try {
     const support = await managementService.getSupportStatistics();
 
@@ -62,15 +50,11 @@ async function getSupportStatistics(req, res) {
       support,
     });
   } catch (error) {
-    console.error(error);
-
-    return res.status(500).json({
-      message: "Erro interno do servidor.",
-    });
+    next(error);
   }
 }
 
-async function getSupportTickets(req, res) {
+async function getSupportTickets(req, res, next) {
   try {
     const support = await managementService.getSupportSummary(req.params.id);
 
@@ -90,15 +74,11 @@ async function getSupportTickets(req, res) {
       tickets,
     });
   } catch (error) {
-    console.error(error);
-
-    return res.status(500).json({
-      message: "Erro interno do servidor.",
-    });
+    next(error);
   }
 }
 
-async function getSupportPerformanceMetrics(req, res) {
+async function getSupportPerformanceMetrics(req, res, next) {
   try {
     const support = await managementService.getSupportSummary(req.params.id);
 
@@ -129,11 +109,7 @@ async function getSupportPerformanceMetrics(req, res) {
       },
     });
   } catch (error) {
-    console.error(error);
-
-    return res.status(500).json({
-      message: "Erro interno do servidor.",
-    });
+    next(error);
   }
 }
 

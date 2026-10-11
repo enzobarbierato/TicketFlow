@@ -1,12 +1,16 @@
 const ticketsService = require("../services/ticketsService");
 const ticketMessagesService = require("../services/ticketMessagesService");
-const { isNonEmptyString } = require("../utils/validators");
 
-async function createMessage(req, res) {
+const {
+  isNonEmptyString,
+} = require("../utils/validators");
+
+async function createMessage(req, res, next) {
   try {
     const ticketId = req.params.ticketId;
     const userId = req.session.user.id;
     const userRole = req.session.user.role;
+
     const { message } = req.body;
 
     if (!isNonEmptyString(message)) {
@@ -41,26 +45,23 @@ async function createMessage(req, res) {
       });
     }
 
-    const ticketMessage = await ticketMessagesService.createMessage({
-      ticketId,
-      userId,
-      message: normalizedMessage,
-    });
+    const createdMessage =
+      await ticketMessagesService.createMessage({
+        ticketId,
+        userId,
+        message: normalizedMessage,
+      });
 
     return res.status(201).json({
-      message: "Mensagem adicionada com sucesso.",
-      ticketMessage,
+      message: "Mensagem enviada com sucesso.",
+      ticket_message: createdMessage,
     });
   } catch (error) {
-    console.error(error);
-
-    return res.status(500).json({
-      message: "Erro interno do servidor.",
-    });
+    next(error);
   }
 }
 
-async function getMessages(req, res) {
+async function getMessages(req, res, next) {
   try {
     const ticketId = req.params.ticketId;
     const userId = req.session.user.id;
@@ -78,19 +79,14 @@ async function getMessages(req, res) {
       });
     }
 
-    const messages = await ticketMessagesService.getMessagesByTicketId(
-      ticketId
-    );
+    const messages =
+      await ticketMessagesService.getMessagesByTicketId(ticketId);
 
     return res.status(200).json({
       messages,
     });
   } catch (error) {
-    console.error(error);
-
-    return res.status(500).json({
-      message: "Erro interno do servidor.",
-    });
+    next(error);
   }
 }
 
