@@ -1232,16 +1232,16 @@ Transações PostgreSQL
 ## Parte 5 — Testes automatizados
 
 ```text
-[ ] Configurar ambiente de testes
-[ ] Autenticação
-[ ] Usuários
-[ ] Chamados
-[ ] Permissões
-[ ] Categorias
-[ ] Mensagens
-[ ] Histórico
-[ ] Dashboard
-[ ] Área gerencial
+[x] Configurar ambiente de testes
+[x] Autenticação
+[x] Usuários
+[x] Chamados
+[x] Permissões
+[x] Categorias
+[x] Mensagens
+[x] Histórico
+[x] Dashboard
+[x] Área gerencial
 ```
 
 ## Parte 6 — Frontend
