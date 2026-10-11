@@ -1,6 +1,30 @@
 const authService = require("../services/authService");
 const {isNonEmptyString,isValidEmail,} = require("../utils/validators");
 
+function regenerateSession(req) {
+  return new Promise((resolve, reject) => {
+    req.session.regenerate((error) => {
+      if (error) {
+        return reject(error);
+      }
+
+      resolve();
+    });
+  });
+}
+
+function saveSession(req) {
+  return new Promise((resolve, reject) => {
+    req.session.save((error) => {
+      if (error) {
+        return reject(error);
+      }
+
+      resolve();
+    });
+  });
+}
+
 async function login(req, res) {
   try {
     const { email, password } = req.body;
@@ -30,6 +54,8 @@ async function login(req, res) {
       });
     }
 
+    await regenerateSession(req);
+
     req.session.user = {
       id: user.id,
       name: user.name,
@@ -38,6 +64,8 @@ async function login(req, res) {
       job_title: user.job_title,
       role: user.role,
     };
+
+    await saveSession(req);
 
     return res.status(200).json({
       message: "Login realizado com sucesso.",

@@ -5,7 +5,12 @@ const requireRole = require("../middlewares/requireRole");
 
 const router = express.Router();
 
-router.post("/", usersController.createUser);
+router.post(
+  "/",
+  requireAuth,
+  requireRole("manager"),
+  usersController.createUser
+);
 
 router.get(
   "/support",

@@ -1,4 +1,5 @@
 const express = require("express");
+const helmet = require("helmet");
 
 const sessionMiddleware = require("./config/session");
 
@@ -11,6 +12,19 @@ const dashboardRoutes = require("./routes/dashboardRoutes");
 const managementRoutes = require("./routes/managementRoutes");
 
 const app = express();
+
+if (process.env.NODE_ENV === "production") {
+  app.set("trust proxy", 1);
+}
+
+app.disable("x-powered-by");
+
+app.use(
+  helmet({
+    contentSecurityPolicy: false,
+  })
+);
+
 app.set("json spaces", 2);
 
 app.use(express.json());

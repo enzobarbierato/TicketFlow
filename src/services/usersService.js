@@ -7,6 +7,7 @@ async function createUser({
   password,
   department,
   job_title,
+  role,
 }) {
   const passwordHash = await bcrypt.hash(password, 12);
 
@@ -16,9 +17,10 @@ async function createUser({
       email,
       password_hash,
       department,
-      job_title
+      job_title,
+      role
     )
-    VALUES ($1, $2, $3, $4, $5)
+    VALUES ($1, $2, $3, $4, $5, $6)
     RETURNING
       id,
       name,
@@ -35,6 +37,7 @@ async function createUser({
     passwordHash,
     department,
     job_title,
+    role,
   ];
 
   const result = await pool.query(query, values);

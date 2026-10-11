@@ -9,6 +9,7 @@ async function createUser(req, res) {
       password,
       department,
       job_title,
+      role = "user",
     } = req.body;
 
     if (!isNonEmptyString(name)) {
@@ -65,12 +66,24 @@ async function createUser(req, res) {
       });
     }
 
+    const allowedRoles = [
+      "user",
+      "support",
+    ];
+
+    if (!allowedRoles.includes(role)) {
+      return res.status(400).json({
+        message: "Perfil de usuário inválido.",
+      });
+    }
+
     const user = await usersService.createUser({
       name: name.trim(),
       email: email.trim().toLowerCase(),
       password,
       department: department.trim(),
       job_title: job_title.trim(),
+      role,
     });
 
     return res.status(201).json({

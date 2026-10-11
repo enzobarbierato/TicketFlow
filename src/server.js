@@ -1,5 +1,15 @@
 require("dotenv").config();
 
+const { validateEnvironment } = require("./config/env");
+
+try {
+  validateEnvironment();
+} catch (error) {
+  console.error("Erro de configuração da aplicação:");
+  console.error(error.message);
+  process.exit(1);
+}
+
 const app = require("./app");
 const pool = require("./database/connection");
 
@@ -17,6 +27,7 @@ async function startServer() {
   } catch (error) {
     console.error("Erro ao conectar ao PostgreSQL:");
     console.error(error.message);
+
     process.exit(1);
   }
 }
