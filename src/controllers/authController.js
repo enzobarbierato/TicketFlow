@@ -1,9 +1,7 @@
 const authService = require("../services/authService");
 
-const {
-  isNonEmptyString,
-  isValidEmail,
-} = require("../utils/validators");
+const {isNonEmptyString,isValidEmail,} = require("../utils/validators");
+const {ensureCsrfToken,} = require("../middlewares/csrfProtection");
 
 function regenerateSession(req) {
   return new Promise((resolve, reject) => {
@@ -27,6 +25,20 @@ function saveSession(req) {
       resolve();
     });
   });
+}
+
+async function getCsrfToken(req, res, next) {
+  try {
+    const csrfToken = ensureCsrfToken(req);
+
+    await saveSession(req);
+
+    return res.status(200).json({
+      csrfToken,
+    });
+  } catch (error) {
+    return next(error);
+  }
 }
 
 async function login(req, res, next) {
@@ -69,11 +81,14 @@ async function login(req, res, next) {
       role: user.role,
     };
 
+    const csrfToken = ensureCsrfToken(req);
+
     await saveSession(req);
 
     return res.status(200).json({
       message: "Login realizado com sucesso.",
       user: req.session.user,
+      csrfToken,
     });
   } catch (error) {
     next(error);
@@ -101,6 +116,7 @@ function logout(req, res, next) {
 }
 
 module.exports = {
+  getCsrfToken,
   login,
   getCurrentUser,
   logout,

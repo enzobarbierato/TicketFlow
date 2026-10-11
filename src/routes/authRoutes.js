@@ -5,6 +5,7 @@ const loginRateLimit = require("../middlewares/loginRateLimit");
 
 const router = express.Router();
 
+router.get("/csrf-token",authController.getCsrfToken);
 router.post("/login",loginRateLimit,authController.login);
 router.get("/me", requireAuth, authController.getCurrentUser);
 router.post("/logout", requireAuth, authController.logout);

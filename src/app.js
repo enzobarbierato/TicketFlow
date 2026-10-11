@@ -12,6 +12,7 @@ const dashboardRoutes = require("./routes/dashboardRoutes");
 const managementRoutes = require("./routes/managementRoutes");
 const notFound = require("./middlewares/notFound");
 const errorHandler = require("./middlewares/errorHandler");
+const {csrfProtection,} = require("./middlewares/csrfProtection");
 
 const app = express();
 
@@ -33,6 +34,7 @@ app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
 app.use(sessionMiddleware);
+app.use(csrfProtection);
 
 app.get("/", (req, res) => {
   res.send("TicketFlow API está funcionando.");
