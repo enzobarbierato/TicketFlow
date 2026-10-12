@@ -1,5 +1,6 @@
 const express = require("express");
 const helmet = require("helmet");
+const path = require("path");
 
 const sessionMiddleware = require("./config/session");
 
@@ -10,9 +11,13 @@ const ticketMessagesRoutes = require("./routes/ticketMessagesRoutes");
 const categoriesRoutes = require("./routes/categoriesRoutes");
 const dashboardRoutes = require("./routes/dashboardRoutes");
 const managementRoutes = require("./routes/managementRoutes");
+
 const notFound = require("./middlewares/notFound");
 const errorHandler = require("./middlewares/errorHandler");
-const {csrfProtection,} = require("./middlewares/csrfProtection");
+
+const {
+  csrfProtection,
+} = require("./middlewares/csrfProtection");
 
 const app = express();
 
@@ -36,8 +41,10 @@ app.use(express.urlencoded({ extended: true }));
 app.use(sessionMiddleware);
 app.use(csrfProtection);
 
-app.get("/", (req, res) => {
-  res.send("TicketFlow API está funcionando.");
+app.get("/api/health", (req, res) => {
+  res.status(200).json({
+    message: "TicketFlow API está funcionando.",
+  });
 });
 
 app.use("/api/users", usersRoutes);
@@ -47,6 +54,12 @@ app.use("/api/tickets", ticketMessagesRoutes);
 app.use("/api/categories", categoriesRoutes);
 app.use("/api/dashboard", dashboardRoutes);
 app.use("/api/management", managementRoutes);
+
+app.use(
+  express.static(
+    path.join(__dirname, "../public")
+  )
+);
 
 app.use(notFound);
 app.use(errorHandler);

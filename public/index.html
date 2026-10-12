@@ -1,0 +1,286 @@
+<!DOCTYPE html>
+
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="description" content="TicketFlow - Sistema de gerenciamento de chamados de suporte.">
+<meta name="theme-color" content="#03045E">
+
+<title>TicketFlow | Entrar</title>
+
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="icon" href="assets/img/TFicon.png" type="image/x-icon">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+
+<link rel="stylesheet" href="/css/base.css">
+<link rel="stylesheet" href="/css/login.css">
+
+<script src="/js/api.js" defer></script>
+<script src="/js/login.js" defer></script>
+
+</script>
+</head>
+
+<body class="login-page">
+
+  <main class="login-layout">
+
+    <section
+      class="login-brand"
+      aria-labelledby="brand-title"
+    >
+      <div class="brand-content">
+
+        <a
+          class="brand-logo"
+          href="/"
+          aria-label="TicketFlow"
+        >
+          <span class="brand-logo-name">
+            TicketFlow
+          </span>
+        </a>
+
+        <div class="brand-message">
+
+          <p class="brand-eyebrow">
+            Gestão de suporte
+          </p>
+
+          <h1 id="brand-title">
+            Chamados organizados.
+            <span>
+              Atendimento sob controle.
+            </span>
+          </h1>
+
+          <p class="brand-description">
+            Centralize solicitações, acompanhe atendimentos
+            e mantenha todo o fluxo de suporte organizado
+            em um único lugar.
+          </p>
+
+        </div>
+
+        <div
+          class="brand-features"
+          aria-label="Recursos do TicketFlow"
+        >
+
+          <div class="brand-feature">
+            <span class="feature-number">
+              01
+            </span>
+
+            <div>
+              <strong>
+                Acompanhamento
+              </strong>
+
+              <p>
+                Visualize o andamento de cada chamado.
+              </p>
+            </div>
+          </div>
+
+          <div class="brand-feature">
+            <span class="feature-number">
+              02
+            </span>
+
+            <div>
+              <strong>
+                Histórico completo
+              </strong>
+
+              <p>
+                Registre cada movimentação do atendimento.
+              </p>
+            </div>
+          </div>
+
+          <div class="brand-feature">
+            <span class="feature-number">
+              03
+            </span>
+
+            <div>
+              <strong>
+                Gestão inteligente
+              </strong>
+
+              <p>
+                Métricas operacionais para suporte e gestão.
+              </p>
+            </div>
+          </div>
+
+        </div>
+
+      </div>
+
+      <footer class="brand-footer">
+        <span>
+          TicketFlow
+        </span>
+
+        <span aria-hidden="true">
+          •
+        </span>
+
+        <span>
+          Sistema de gerenciamento de chamados
+        </span>
+      </footer>
+
+    </section>
+
+    <section
+      class="login-access"
+      aria-labelledby="login-title"
+    >
+
+      <div class="login-card">
+
+        <div class="login-card-header">
+
+          <p class="login-eyebrow">
+            Acesso ao sistema
+          </p>
+
+          <h2 id="login-title">
+            Bem-vindo
+          </h2>
+
+          <p>
+            Informe suas credenciais para acessar o TicketFlow.
+          </p>
+
+        </div>
+
+        <form
+          id="login-form"
+          class="login-form"
+          novalidate
+        >
+
+          <div class="form-group">
+
+            <label for="email">
+              E-mail
+            </label>
+
+            <input
+              type="email"
+              id="email"
+              name="email"
+              placeholder="nome@empresa.com"
+              autocomplete="email"
+              maxlength="160"
+              required
+            >
+
+          </div>
+
+          <div class="form-group">
+
+            <label for="password">
+              Senha
+            </label>
+
+            <div class="password-field">
+
+              <input
+                type="password"
+                id="password"
+                name="password"
+                placeholder="Digite sua senha"
+                autocomplete="current-password"
+                required
+              >
+
+              <button
+                type="button"
+                id="toggle-password"
+                class="password-toggle"
+                aria-label="Mostrar senha"
+                aria-pressed="false"
+              >
+
+                <svg
+                  class="password-icon"
+                  viewBox="0 0 24 24"
+                  aria-hidden="true"
+                >
+                  <path
+                    d="M2.5 12s3.5-6 9.5-6 9.5 6 9.5 6-3.5 6-9.5 6-9.5-6-9.5-6Z"
+                  ></path>
+
+                  <circle
+                    cx="12"
+                    cy="12"
+                    r="3"
+                  ></circle>
+                </svg>
+
+              </button>
+
+            </div>
+
+          </div>
+
+          <div
+            id="login-message"
+            class="form-message"
+            role="alert"
+            aria-live="polite"
+            hidden
+          ></div>
+
+          <button
+            type="submit"
+            id="login-submit"
+            class="login-button"
+          >
+
+            <span class="button-label">
+              Entrar
+            </span>
+
+            <span
+              class="button-loader"
+              aria-hidden="true"
+              hidden
+            ></span>
+
+          </button>
+
+        </form>
+
+        <div class="login-security">
+
+          <span
+            class="security-indicator"
+            aria-hidden="true"
+          ></span>
+
+          <p>
+            Acesso restrito a usuários autorizados.
+          </p>
+
+        </div>
+
+      </div>
+
+      <p class="login-copyright">
+        © 2026 TicketFlow. Todos os direitos reservados.
+      </p>
+
+    </section>
+
+  </main>
+
+</body>
+</html>
